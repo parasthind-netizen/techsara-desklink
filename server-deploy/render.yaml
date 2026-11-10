@@ -1,0 +1,10 @@
+# Rebuild marker: 2026-06-03b — dashboard logout + remove-client buttons
+services:
+  - type: web
+    name: techsara-signaling-server
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /healthz
+    autoDeploy: true

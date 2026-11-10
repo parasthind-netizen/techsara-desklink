@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Download DeskLink</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+      color: #e2e8f0;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 24px;
+      padding: 3rem 2.5rem;
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .logo-icon {
+      width: 64px; height: 64px;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      border-radius: 18px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 1.5rem;
+      box-shadow: 0 8px 24px rgba(59,130,246,0.4);
+    }
+
+    .logo-icon svg { width: 34px; height: 34px; stroke: white; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+    h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .subtitle { font-size: 0.88rem; color: #94a3b8; margin-bottom: 2rem; line-height: 1.5; }
+
+    .os-tabs {
+      display: flex;
+      background: rgba(0,0,0,0.25);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 4px;
+      margin-bottom: 1.6rem;
+    }
+    .os-tab {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 9px;
+      background: none;
+      color: #94a3b8;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .os-tab.active { background: #3b82f6; color: #fff; }
+
+    .download-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      width: 100%;
+      padding: 16px;
+      background: #3b82f6;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 14px;
+      font-size: 1rem;
+      font-weight: 700;
+      transition: background 0.2s, transform 0.15s;
+      margin-bottom: 1rem;
+    }
+
+    .download-btn:hover { background: #2563eb; transform: translateY(-1px); }
+    .download-btn:active { transform: scale(0.99); }
+    .download-btn svg { flex-shrink: 0; }
+
+    .file-info {
+      font-size: 0.74rem;
+      color: #64748b;
+      margin-bottom: 2.2rem;
+    }
+
+    .steps {
+      background: rgba(0,0,0,0.2);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 14px;
+      padding: 1.5rem;
+      text-align: left;
+    }
+
+    .steps h3 {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #64748b;
+      margin-bottom: 1rem;
+    }
+
+    .step {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 1rem;
+    }
+
+    .step:last-child { margin-bottom: 0; }
+
+    .step-num {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: rgba(59,130,246,0.15);
+      border: 1px solid rgba(59,130,246,0.3);
+      color: #3b82f6;
+      font-size: 0.72rem;
+      font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .step-text { font-size: 0.82rem; color: #cbd5e1; line-height: 1.5; }
+    .step-text strong { color: #fff; }
+
+    .note {
+      font-size: 0.72rem;
+      color: #475569;
+      margin-top: 1.5rem;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+    </div>
+
+    <h1>DeskLink</h1>
+    <p class="subtitle">Download and install this small app so your support agent can view your screen and help you remotely.</p>
+
+    <div class="os-tabs">
+      <button class="os-tab active" id="tab-windows">Windows</button>
+      <button class="os-tab" id="tab-mac">Mac</button>
+    </div>
+
+    <!-- ── WINDOWS ─────────────────────────────────── -->
+    <div id="pane-windows">
+      <a class="download-btn" href="/download/windows-zip">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download for Windows
+      </a>
+      <p class="file-info">Windows 10 / 11 &nbsp;·&nbsp; ~80 MB (ZIP) &nbsp;·&nbsp; Free &nbsp;·&nbsp; <a href="/download/windows" style="color:#64748b;">direct installer (.exe)</a></p>
+
+      <div class="steps">
+        <h3>How to install</h3>
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-text">Click the button above and save the file. If Windows asks, click <strong>"Keep"</strong>.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-text">Open the downloaded ZIP, right-click → <strong>Extract All</strong>, then run <strong>DeskLink-Setup.exe</strong>. If you see a "Windows protected your PC" warning, click <strong>"More info" → "Run anyway"</strong>.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-text">The <strong>DeskLink</strong> app opens and asks for your <strong>installation code</strong> — type in the 9-digit code your support agent gave you.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-text">That's it — your computer now shows as <strong>Available</strong> on the support dashboard, and stays available until you click <strong>"Disable Support Access"</strong> in the app.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── MAC ─────────────────────────────────────── -->
+    <div id="pane-mac" style="display:none;">
+      <a class="download-btn" href="/download/mac">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download for Mac (Apple Silicon)
+      </a>
+      <p class="file-info">macOS 11+ &nbsp;·&nbsp; ~100 MB (DMG) &nbsp;·&nbsp; Free &nbsp;·&nbsp; <a href="/download/mac?arch=intel" style="color:#64748b;">Intel Mac version</a><br><span style="color:#475569;">Most Macs from 2020 on are Apple Silicon (M1/M2/M3/M4). Older Macs need the Intel version.</span></p>
+
+      <div class="steps">
+        <h3>How to install</h3>
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-text">Click the button above, then open the downloaded <strong>DeskLink.dmg</strong> and drag <strong>DeskLink</strong> into the <strong>Applications</strong> folder.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-text">Open DeskLink from Applications. If macOS warns about the app, <strong>right-click it → Open → Open</strong> (or go to <strong>System Settings → Privacy &amp; Security</strong> and click <strong>"Open Anyway"</strong>).</div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-text">Type in the 9-digit <strong>installation code</strong> your support agent gave you.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-text">The app asks for two macOS permissions — <strong>Screen Recording</strong> and <strong>Accessibility</strong>. Click <strong>Grant</strong> on each, switch <strong>DeskLink ON</strong> in System Settings, then press <strong>"Restart DeskLink"</strong> in the app.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">5</div>
+          <div class="step-text">Done — your Mac now shows as <strong>Available</strong> on the support dashboard, and stays available until you click <strong>"Disable Support Access"</strong> in the app.</div>
+        </div>
+      </div>
+    </div>
+
+    <p class="note">
+      Your support team can only connect while the app shows <strong>Active</strong> —
+      click <strong>"Disable Support Access"</strong> at any time to stop being reachable,
+      or <strong>"Disconnect Session"</strong> to end a live session instantly.<br><br>
+      DeskLink keeps itself running in the background (system tray / menu bar) so your
+      support team can help even after a restart. To remove it completely, uninstall it
+      like any other app.<br><br>
+      Some antivirus tools may warn about this app because remote-assistance software can
+      control the screen — that is exactly what it is for. It is safe to keep and install.
+    </p>
+  </div>
+
+  <script>
+    // Preselect the visitor's platform; both tabs stay one click away.
+    const tabWin = document.getElementById('tab-windows');
+    const tabMac = document.getElementById('tab-mac');
+    function showOS(os) {
+      const mac = os === 'mac';
+      tabMac.classList.toggle('active', mac);
+      tabWin.classList.toggle('active', !mac);
+      document.getElementById('pane-mac').style.display = mac ? '' : 'none';
+      document.getElementById('pane-windows').style.display = mac ? 'none' : '';
+    }
+    tabWin.addEventListener('click', () => showOS('windows'));
+    tabMac.addEventListener('click', () => showOS('mac'));
+    if (/Mac|iPhone|iPad/.test(navigator.platform) || /Macintosh/.test(navigator.userAgent)) showOS('mac');
+  </script>
+</body>
+</html>

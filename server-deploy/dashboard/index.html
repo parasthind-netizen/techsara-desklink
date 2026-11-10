@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Techsara Remote Support</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ══════════ LOGIN SCREEN ══════════ -->
+  <div id="login-screen">
+    <div class="login-card">
+      <div class="login-logo">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        <span>Techsara <b>Remote</b></span>
+      </div>
+      <p class="login-sub">Sign in to the support console</p>
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="admin-name" placeholder="username" autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <div class="pwd-wrap">
+          <input type="password" id="admin-password" placeholder="Password" autocomplete="current-password">
+          <button type="button" class="pwd-eye" id="login-pwd-eye" title="Show password" tabindex="-1">
+            <svg id="eye-show" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            <svg id="eye-hide" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+          </button>
+        </div>
+      </div>
+      <button class="btn-primary" id="login-btn">Sign in</button>
+      <div class="error-msg" id="login-error" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- ══════════ APP ══════════ -->
+  <div id="app" style="display:none;">
+
+    <!-- Top bar -->
+    <header class="topbar">
+      <button class="grid-btn" id="btn-home" title="Home">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="5" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="12" cy="19" r="2"/><circle cx="19" cy="19" r="2"/></svg>
+      </button>
+      <nav class="tab-strip" id="tab-strip"></nav>
+      <div class="topbar-right">
+        <div class="server-indicator" id="server-indicator" title="Server connection"></div>
+        <button class="top-icon-btn" id="bell-btn" title="Agents waiting">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+          <span class="bell-badge" id="bell-badge" style="display:none;">0</span>
+        </button>
+        <button class="top-icon-btn" id="logout-btn" title="Log out">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- ── HOME ── -->
+    <section class="view" id="view-home">
+      <div class="home-search-row">
+        <input type="text" id="home-search" placeholder="Search" autocomplete="off">
+        <svg class="home-search-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
+      </div>
+      <div class="tile-grid">
+        <button class="tile" data-open="agents">
+          <span class="tile-icon tile-icon-agents">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </span>
+          <span class="tile-label">Agents</span>
+        </button>
+        <button class="tile" data-open="install">
+          <span class="tile-icon tile-icon-install">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </span>
+          <span class="tile-label">Install Agent</span>
+        </button>
+        <button class="tile" data-open="activity">
+          <span class="tile-icon tile-icon-activity">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
+          </span>
+          <span class="tile-label">Analyze events</span>
+        </button>
+        <button class="tile" data-open="account">
+          <span class="tile-icon tile-icon-account">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="#fff"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+          </span>
+          <span class="tile-label">My Account</span>
+        </button>
+        <button class="tile admin-only" data-open="admin" style="display:none;">
+          <span class="tile-icon tile-icon-admin">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </span>
+          <span class="tile-label">Admin Panel</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ── AGENTS ── -->
+    <section class="view" id="view-agents" style="display:none;">
+      <aside class="side-panel">
+        <div class="side-title">Agents</div>
+        <button class="side-filter active" data-filter="all">All <span class="side-count" id="count-all"></span></button>
+        <button class="side-filter" data-filter="available">Available <span class="side-count" id="count-available"></span></button>
+        <button class="side-filter" data-filter="unavailable">Unavailable <span class="side-count" id="count-unavailable"></span></button>
+        <button class="side-filter" data-filter="toinstall">To install <span class="side-count" id="count-toinstall"></span></button>
+        <button class="side-filter" data-filter="offline">Offline <span class="side-count" id="count-offline"></span></button>
+      </aside>
+      <div class="panel-main">
+        <div class="panel-toolbar">
+          <button class="tool-btn" id="agents-refresh" title="Refresh">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          </button>
+          <button class="tool-btn" id="agents-add" title="Install agent on a new computer">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+          <input type="text" class="tool-search" id="agents-search" placeholder="Search" autocomplete="off">
+        </div>
+        <div class="agents-grid" id="agents-grid"></div>
+        <div class="empty-state" id="agents-empty" style="display:none;">
+          No agents yet. Use <b>+</b> to install the agent on a client computer.
+        </div>
+      </div>
+    </section>
+
+    <!-- ── SESSION ── -->
+    <section class="view view-session" id="view-session" style="display:none;">
+
+      <aside class="session-side">
+        <div class="session-side-head">
+          <span class="live-dot"></span>
+          <span id="session-client-name">Connecting…</span>
+        </div>
+
+        <div class="sside-label">Session</div>
+        <button class="sside-btn" id="fullscreen-btn" title="Fullscreen (captures Ctrl+W, Alt+Tab etc. for the remote PC)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+          <span>Fullscreen</span>
+        </button>
+        <button class="sside-btn" id="reconnect-btn" title="Reconnect video if screen is black">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          <span>Reconnect</span>
+        </button>
+        <button class="sside-btn sside-danger" id="disconnect-btn">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          <span>End Session</span>
+        </button>
+
+        <div class="sside-label">Controls</div>
+        <button class="sside-btn sside-toggle ctrl-on" id="ctrl-mouse" title="Toggle mouse control">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="7"/><line x1="12" y1="2" x2="12" y2="10"/></svg>
+          <span id="ctrl-mouse-label">Mouse: ON</span>
+        </button>
+        <button class="sside-btn sside-toggle ctrl-on" id="ctrl-keyboard" title="Toggle keyboard control">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><line x1="6" y1="10" x2="6" y2="10"/><line x1="10" y1="10" x2="10" y2="10"/><line x1="14" y1="10" x2="14" y2="10"/><line x1="18" y1="10" x2="18" y2="10"/><line x1="6" y1="14" x2="18" y2="14"/></svg>
+          <span id="ctrl-keyboard-label">Keyboard: AUTO</span>
+        </button>
+
+        <div class="sside-label">Screen quality</div>
+        <label class="sside-select" title="Lower quality uses less bandwidth on slow links">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          <select id="ctrl-quality">
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high" selected>High</option>
+          </select>
+        </label>
+
+        <div class="sside-label">Clipboard</div>
+        <button class="sside-btn" id="ctrl-send-clip" title="Send your clipboard text to the client">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <span>Send My Clipboard</span>
+        </button>
+        <div class="sside-note">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Client clipboard: AUTO — anything the client copies lands in your clipboard.
+        </div>
+      </aside>
+
+      <div class="video-wrapper" id="video-wrapper">
+        <div class="video-placeholder" id="placeholder">
+          <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          <p id="placeholder-text">Connecting…</p>
+          <p class="placeholder-sub" id="placeholder-sub">Waiting for the agent's screen</p>
+        </div>
+
+        <video id="remote-video" autoplay playsinline></video>
+
+        <!-- keyboard routing pill -->
+        <div class="kbd-pill" id="kbd-pill">⌨ Keyboard → Remote</div>
+
+        <div class="clip-toast" id="clip-toast"></div>
+      </div>
+    </section>
+
+    <!-- ── ANALYZE EVENTS ── -->
+    <section class="view" id="view-activity" style="display:none;">
+      <div class="simple-panel">
+        <div class="simple-panel-head">
+          <h3>Analyze events</h3>
+          <button class="btn-light" id="log-clear">Clear</button>
+        </div>
+        <div class="log-body" id="debug-logs"><div>&gt; System ready.</div></div>
+      </div>
+    </section>
+
+    <!-- ── INSTALL AGENT ── -->
+    <section class="view" id="view-install" style="display:none;">
+      <div class="simple-panel">
+        <div class="simple-panel-head"><h3>Install agent on a client computer</h3></div>
+        <p class="muted">Send this link to your client — they download and install the Techsara Support agent, then click <b>"Allow Support Access"</b> in the app.</p>
+        <div class="copy-row">
+          <span class="copy-url" id="copy-url"></span>
+          <button class="btn-copy" id="btn-copy">Copy</button>
+        </div>
+        <a class="btn-primary btn-inline" href="/download.html" target="_blank">Open Download Page</a>
+      </div>
+    </section>
+
+    <!-- ── MY ACCOUNT ── -->
+    <section class="view" id="view-account" style="display:none;">
+      <div class="simple-panel">
+        <div class="simple-panel-head"><h3>My Account</h3></div>
+        <div class="acct-row"><span class="acct-label">Signed in as</span><span id="acct-name">—</span></div>
+        <div class="acct-row"><span class="acct-label">Role</span><span id="acct-role">—</span></div>
+        <div class="acct-row"><span class="acct-label">Server</span><span id="acct-server">—</span></div>
+        <div class="acct-row"><span class="acct-label">Connection</span><span id="acct-conn">—</span></div>
+        <div class="acct-actions">
+          <button class="btn-light" id="acct-logout">Log out</button>
+          <button class="btn-danger admin-only" id="force-reset-btn" style="display:none;">Reset All Sessions</button>
+        </div>
+        <p class="muted small admin-only" style="display:none;">Reset disconnects every active session on the server — clients will need to re-enable access.</p>
+      </div>
+    </section>
+
+    <!-- ── ADMIN PANEL ── -->
+    <section class="view" id="view-admin" style="display:none;">
+      <div class="simple-panel" style="width:min(900px,94%);">
+
+        <div class="simple-panel-head"><h3>Create support user</h3></div>
+        <div class="admin-form">
+          <div class="af-field">
+            <label>Username</label>
+            <input type="text" id="nu-username" placeholder="e.g. rahul" autocomplete="off">
+          </div>
+          <div class="af-field">
+            <label>Password</label>
+            <input type="text" id="nu-password" placeholder="min 6 chars" autocomplete="off">
+          </div>
+          <div class="af-field">
+            <label>Access level</label>
+            <select id="nu-role">
+              <option value="support">Support agent</option>
+              <option value="admin">Administrator</option>
+            </select>
+          </div>
+          <button class="btn-primary af-btn" id="nu-create">Create user</button>
+        </div>
+        <div class="admin-msg" id="admin-msg" style="display:none;"></div>
+
+        <div class="simple-panel-head" style="margin-top:26px;"><h3>Users</h3></div>
+        <table class="admin-table">
+          <thead><tr><th>Username</th><th>Access level</th><th>Created by</th><th></th></tr></thead>
+          <tbody id="users-tbody"></tbody>
+        </table>
+
+        <div class="simple-panel-head" style="margin-top:26px;"><h3>Push app update</h3></div>
+        <div class="admin-form" style="align-items:center;">
+          <div class="af-field">
+            <label>Staged version</label>
+            <div id="feed-version" class="muted" style="font-size:14px;padding-top:4px;">—</div>
+          </div>
+          <button class="btn-primary af-btn" id="push-all-btn" disabled title="Push a canary agent first">Push update to ALL online agents</button>
+          <button class="btn-light af-btn" id="reset-rollout-btn">Reset rollout</button>
+        </div>
+        <p class="muted small">Safe rollout: click <b>Update</b> on ONE agent below (canary). When it comes back on the new version, <b>Push to ALL</b> unlocks. If something breaks, use <b>Roll back</b> in the history below.</p>
+
+        <div class="simple-panel-head" style="margin-top:26px;"><h3>Registered agents (client PCs)</h3></div>
+        <table class="admin-table">
+          <thead><tr><th>Agent</th><th>Version</th><th>Status</th><th></th></tr></thead>
+          <tbody id="admin-agents-tbody"></tbody>
+        </table>
+
+        <div class="simple-panel-head" style="margin-top:26px;"><h3>Update history &amp; rollback</h3></div>
+        <table class="admin-table">
+          <thead><tr><th>Version</th><th></th><th></th></tr></thead>
+          <tbody id="versions-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ══════════ CREATE AGENT MODAL ══════════ -->
+  <div class="modal-overlay" id="create-agent-modal" style="display:none;">
+    <div class="modal-card">
+      <div id="ca-step1">
+        <h3>Add a new agent</h3>
+        <p class="muted small" style="margin:6px 0 14px;">Name the computer or person you want to support. You'll get an installation code to give them.</p>
+        <label class="ca-label">Agent name</label>
+        <input type="text" id="ca-name" placeholder="e.g. Reception PC" maxlength="39" autocomplete="off">
+        <div class="error-msg" id="ca-error" style="display:none;"></div>
+        <div class="modal-actions">
+          <button class="btn-light" id="ca-cancel">Cancel</button>
+          <button class="btn-primary btn-inline" id="ca-create">Create agent</button>
+        </div>
+      </div>
+      <div id="ca-step2" style="display:none;">
+        <h3>Agent created</h3>
+        <p class="muted small" style="margin:6px 0 10px;">Installation code for <b id="ca-created-name"></b>:</p>
+        <div class="ca-code" id="ca-code"></div>
+        <ol class="ca-steps">
+          <li>Send the client the download page: <span class="ca-link" id="ca-dl-link"></span></li>
+          <li>They install the app — it asks for this code during setup.</li>
+          <li>Once they enter it, this agent goes from <b>To install</b> to <b>Online</b>.</li>
+        </ol>
+        <div class="modal-actions">
+          <button class="btn-light" id="ca-copy-code">Copy code</button>
+          <button class="btn-primary btn-inline" id="ca-done">Done</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ TRANSFER AGENT MODAL ══════════ -->
+  <div class="modal-overlay" id="transfer-agent-modal" style="display:none;">
+    <div class="modal-card">
+      <h3>Transfer agent</h3>
+      <p class="muted small" style="margin:6px 0 14px;">
+        Hand <b id="tr-agent-name"></b> to another support user. It leaves your Agents
+        list and appears in theirs. Currently assigned to <b id="tr-current"></b>.
+      </p>
+      <label class="ca-label">Transfer to</label>
+      <select id="tr-user"></select>
+      <p class="muted small" id="tr-busy" style="display:none; margin-top:10px;">
+        This agent is in a live session &mdash; transferring will end it.
+      </p>
+      <div class="error-msg" id="tr-error" style="display:none;"></div>
+      <div class="modal-actions">
+        <button class="btn-light" id="tr-cancel">Cancel</button>
+        <button class="btn-primary btn-inline" id="tr-confirm">Transfer</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

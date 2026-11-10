@@ -1,0 +1,70 @@
+# Builds the DeskLink macOS agent (DMG + ZIP for arm64 and x64, plus
+# latest-mac.yml) on a GitHub-hosted Mac runner — the office machine is
+# Windows, and electron-builder can only produce mac targets on macOS.
+#
+# Trigger it manually (Actions tab -> "Build macOS agent" -> Run workflow),
+# then download the "desklink-mac-<version>" artifact, unzip it into
+# client/dist/ on the office machine, and run deploy-release.ps1 as usual.
+#
+# Code signing / notarization (needed for auto-update to work on macOS):
+# add these repository secrets and the build signs + notarizes automatically —
+#   CSC_LINK                       base64 of the Developer ID .p12
+#   CSC_KEY_PASSWORD               the .p12 password
+#   APPLE_ID / APPLE_APP_SPECIFIC_PASSWORD / APPLE_TEAM_ID   for notarytool
+# Without them the build is unsigned: it installs fine (right-click -> Open),
+# but electron-updater cannot self-update unsigned mac apps.
+name: Build macOS agent
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-mac:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        working-directory: client
+        run: npm ci
+
+      - name: Read version
+        id: ver
+        working-directory: client
+        run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Build (dmg + zip, arm64 + x64)
+        working-directory: client
+        env:
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          EXTRA=""
+          if [ -n "$CSC_LINK" ] && [ -n "$APPLE_TEAM_ID" ]; then
+            EXTRA="-c.mac.notarize=true"
+          else
+            export CSC_IDENTITY_AUTO_DISCOVERY=false
+          fi
+          npx electron-builder --mac --arm64 --x64 $EXTRA
+
+      - name: Collect release files
+        working-directory: client
+        run: |
+          mkdir -p upload
+          cp dist/latest-mac.yml upload/
+          cp dist/DeskLink-*.dmg upload/
+          cp dist/DeskLink-*.zip upload/
+          ls -la upload/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desklink-mac-${{ steps.ver.outputs.version }}
+          path: client/upload/
+          if-no-files-found: error

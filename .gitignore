@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Build output (installers are built in CI / locally, never committed)
+client/dist/
+client/build/.icon-ico/
+client/build/.icon-icns/
+
+# Server runtime data — SECRETS: users.json (password hashes), agents.json,
+# turn-secret. Never commit.
+server-deploy/data/
+server-deploy/downloads/
+
+# Update feeds — large binaries, deployed via deploy-release.ps1 not git
+server-deploy/updates/
+
+# Logs & OS cruft
+*.log
+.DS_Store
+Thumbs.db
+
+# Local env
+.env
+*.pem
+*.key

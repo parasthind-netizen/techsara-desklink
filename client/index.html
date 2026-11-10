@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>DeskLink</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      color: #e2e8f0;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.07);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 2.5rem 2rem;
+      border-radius: 20px;
+      text-align: center;
+      width: 360px;
+    }
+
+    .logo-icon {
+      width: 52px; height: 52px;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 1rem;
+    }
+
+    .logo-icon svg { width: 28px; height: 28px; stroke: white; fill: none; stroke-width: 2; }
+
+    .logo { font-size: 1.4rem; font-weight: 700; color: #fff; margin-bottom: 0.25rem; }
+    .subtitle { font-size: 0.8rem; color: #64748b; margin-bottom: 2rem; }
+
+    /* ── NAME SETUP ───────────────────── */
+    .name-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      text-align: left;
+      display: block;
+      margin-bottom: 0.5rem;
+    }
+
+    .name-input {
+      width: 100%;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: #f1f5f9;
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+      text-align: center;
+    }
+
+    .name-input:focus { border-color: #3b82f6; }
+    .name-input::placeholder { color: #475569; }
+
+    .name-error {
+      color: #f87171;
+      font-size: 0.75rem;
+      margin-top: 0.5rem;
+      display: none;
+    }
+
+    /* ── MAIN UI ──────────────────────── */
+    .status-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 1.2rem;
+    }
+
+    .dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .dot.connecting    { background: #f59e0b; animation: pulse 1.5s infinite; }
+    .dot.ready         { background: #475569; }
+    .dot.waiting       { background: #3b82f6; animation: pulse 1.5s infinite; }
+    .dot.in_session    { background: #10b981; }
+    .dot.resumed       { background: #10b981; animation: pulse 1.5s infinite; }
+    .dot.reconnecting  { background: #f59e0b; animation: pulse 1s infinite; }
+    .dot.ended         { background: #475569; }
+    .dot.error         { background: #ef4444; animation: pulse 1.5s infinite; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.5; transform: scale(0.85); }
+    }
+
+    .status-text { font-weight: 600; font-size: 0.95rem; color: #e2e8f0; }
+
+    .client-id-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-family: 'Courier New', monospace;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      color: #7dd3fc;
+      margin-bottom: 1.8rem;
+      letter-spacing: 0.03em;
+    }
+
+    .change-name-btn {
+      background: none;
+      border: none;
+      color: #475569;
+      font-size: 0.65rem;
+      font-family: inherit;
+      cursor: pointer;
+      padding: 0;
+      text-decoration: underline;
+      white-space: nowrap;
+    }
+
+    .change-name-btn:hover { color: #94a3b8; }
+
+    .agent-info {
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 0.82rem;
+      color: #a7f3d0;
+      margin-bottom: 1.2rem;
+      display: none;
+    }
+
+    .agent-name { font-weight: 700; }
+
+    #actions { display: flex; flex-direction: column; gap: 0.6rem; }
+
+    .btn {
+      width: 100%;
+      padding: 13px;
+      border: none;
+      border-radius: 12px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s, background 0.2s;
+      letter-spacing: 0.02em;
+    }
+
+    .btn:active { transform: scale(0.98); }
+
+    .btn-start        { background: #3b82f6; color: #fff; margin-top: 1rem; }
+    .btn-start:hover  { background: #2563eb; }
+
+    .btn-allow        { background: #10b981; color: #fff; }
+    .btn-allow:hover  { background: #059669; }
+
+    .btn-cancel       { background: rgba(255,255,255,0.07); color: #94a3b8; border: 1px solid rgba(255,255,255,0.1); }
+    .btn-cancel:hover { background: rgba(255,255,255,0.12); }
+
+    .btn-disconnect       { background: #ef4444; color: #fff; }
+    .btn-disconnect:hover { background: #dc2626; }
+
+    .state-word {
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: #64748b;
+      margin-bottom: 0.35rem;
+    }
+    .state-word.sw-enabled,
+    .state-word.sw-ended      { color: #16a34a; }
+    .state-word.sw-in_session,
+    .state-word.sw-reconnecting,
+    .state-word.sw-resumed    { color: #2563eb; }
+    .state-word.sw-error      { color: #dc2626; }
+    .state-word.sw-ready      { color: #b45309; }
+
+    .note {
+      font-size: 0.68rem;
+      color: #334155;
+      margin-top: 1.8rem;
+      line-height: 1.6;
+    }
+
+    /* ── macOS permissions banner ────── */
+    .perm-banner {
+      background: rgba(245, 158, 11, 0.09);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 1.2rem;
+      text-align: left;
+      display: none;
+    }
+    .perm-title { font-size: 0.78rem; font-weight: 700; color: #fbbf24; margin-bottom: 8px; }
+    .perm-row {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 8px; margin-bottom: 6px; font-size: 0.76rem; color: #e2e8f0;
+    }
+    .perm-row:last-child { margin-bottom: 0; }
+    .perm-ok  { color: #34d399; font-weight: 600; }
+    .perm-btn {
+      background: rgba(245, 158, 11, 0.18);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      color: #fcd34d;
+      font-size: 0.7rem; font-family: inherit; font-weight: 600;
+      padding: 5px 10px; border-radius: 7px; cursor: pointer;
+      white-space: nowrap;
+    }
+    .perm-btn:hover { background: rgba(245, 158, 11, 0.3); }
+    .perm-btn.restart { background: #10b981; border-color: #10b981; color: #fff; }
+    .perm-note { font-size: 0.66rem; color: #94a3b8; margin-top: 8px; line-height: 1.5; }
+  </style>
+</head>
+<body>
+
+  <!-- INSTALLATION CODE SCREEN (first launch) -->
+  <div id="setup-screen" style="display:none;">
+    <div class="card">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="3" width="20" height="14" rx="2"/>
+          <line x1="8" y1="21" x2="16" y2="21"/>
+          <line x1="12" y1="17" x2="12" y2="21"/>
+        </svg>
+      </div>
+      <div class="logo">DeskLink</div>
+      <div class="subtitle">Enter the installation code your support agent gave you to set up this computer.</div>
+
+      <label class="name-label">Installation Code</label>
+      <input class="name-input" id="code-input" type="text" placeholder="364-630-153" maxlength="11" autocomplete="off" inputmode="numeric" />
+      <div class="name-error" id="code-error">Please enter your installation code.</div>
+
+      <button class="btn btn-start" id="redeem-btn">Continue</button>
+
+      <div class="note">Don't have a code? Ask your support agent — they create one for you on their dashboard.</div>
+    </div>
+  </div>
+
+  <!-- MAIN SUPPORT SCREEN -->
+  <div id="main-screen" style="display:none;">
+    <div class="card">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="3" width="20" height="14" rx="2"/>
+          <line x1="8" y1="21" x2="16" y2="21"/>
+          <line x1="12" y1="17" x2="12" y2="21"/>
+        </svg>
+      </div>
+      <div class="logo">DeskLink</div>
+      <div class="subtitle">Remote assistance for your computer</div>
+
+      <div class="state-word" id="state-word">Connecting</div>
+
+      <div class="status-row">
+        <div class="dot connecting" id="dot"></div>
+        <span class="status-text" id="status-text">Connecting...</span>
+      </div>
+
+      <div class="client-id-row">
+        <span id="client-id-label">Loading...</span>
+        <button class="change-name-btn" id="reprovision-btn" title="Set up this computer with a different installation code">✎ change code</button>
+      </div>
+
+      <div class="agent-info" id="agent-info">
+        <span class="agent-name" id="agent-name"></span><span id="agent-info-suffix"> is viewing your screen</span>
+      </div>
+
+      <div class="perm-banner" id="perm-banner"></div>
+
+      <div id="actions"></div>
+
+      <div class="note">
+        While this computer is <b>Active</b>, your support team can start a session
+        when you ask them for help.<br>
+        Click "Disable Support Access" to go Inactive, or "Disconnect Session" to end a live one.
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script>
+    // Discovery is redundant: S3 (our AWS account) first, npoint (legacy
+    // third-party) as fallback, and finally the last server that ever worked.
+    // Any one of the three is enough to find the signaling server.
+    const DISCOVERY_URLS = [
+      'https://techsara-discovery-724090280408.s3.eu-west-2.amazonaws.com/discovery.json',
+      'https://api.npoint.io/42f501da0967893db41c'
+    ];
+
+    let socket = null;
+    let clientId = null;
+    let peerConnection = null;
+    let dataChannel = null;
+    let localStream = null;
+    let currentSupportId = null;   // support socket we are streaming to (null when not in a session)
+    let reshareTimer = null;
+    let availabilityStateTimer = null;   // fallback timer for servers too old to send availability_state
+
+    // Screen quality presets, chosen from the dashboard ("Screen quality"
+    // dropdown, sent as {type:'quality', level}). Bitrate and frame-rate caps
+    // plus an encoder-side downscale for Low, so a slow link gets a fluid,
+    // low-bandwidth picture instead of a smeared one. High = the tuned default.
+    const QUALITY_PRESETS = {
+      low:    { maxBitrate: 1_500_000,  maxFramerate: 20, scaleResolutionDownBy: 2 },
+      medium: { maxBitrate: 4_000_000,  maxFramerate: 30, scaleResolutionDownBy: 1 },
+      high:   { maxBitrate: 10_000_000, maxFramerate: 60, scaleResolutionDownBy: 1 }
+    };
+    let currentQuality = 'high';
+    let videoSender = null;   // RTCRtpSender of the live screen track
+
+    async function applyQuality(level) {
+      if (!QUALITY_PRESETS[level]) return;
+      currentQuality = level;
+      if (!videoSender) return;                    // applied at the next share via sendEncodings
+      try {
+        const p = videoSender.getParameters();
+        if (!p.encodings || !p.encodings.length) p.encodings = [{}];
+        Object.assign(p.encodings[0], QUALITY_PRESETS[level]);
+        await videoSender.setParameters(p);
+        console.log('Screen quality →', level);
+      } catch (e) { console.warn('applyQuality:', e); }
+    }
+    let currentSignalingUrl = null;
+
+    // Persistent enable flag — once the user enables support access it stays
+    // enabled (and the dashboard shows this PC as Available) across restarts,
+    // until the user clicks Disable or an admin deletes the agent.
+    let supportEnabled = localStorage.getItem('ts_enabled') === '1';
+
+    // ICE servers are fetched live from the signaling server (/ice) so the
+    // self-hosted TURN relay's short-lived credentials are always current.
+    let iceConfig = {
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' }
+      ],
+      iceCandidatePoolSize: 10
+    };
+
+    async function refreshIce() {
+      if (!currentSignalingUrl) return;
+      try {
+        const res = await fetch(currentSignalingUrl + '/ice', { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data && Array.isArray(data.iceServers) && data.iceServers.length)
+            iceConfig = { iceServers: data.iceServers, iceCandidatePoolSize: 10 };
+        }
+      } catch (e) { /* keep STUN-only fallback */ }
+    }
+
+    // ── Startup: check for saved name ─────
+    const savedName = localStorage.getItem('ts_client_name');
+    if (savedName) {
+      clientId = savedName;
+      showMainScreen();
+      initialize();
+    } else {
+      document.getElementById('setup-screen').style.display = 'flex';
+    }
+
+    // ── Installation code setup handlers ──
+    const codeInput = document.getElementById('code-input');
+    const redeemBtn = document.getElementById('redeem-btn');
+
+    function codeError(msg) {
+      const el = document.getElementById('code-error');
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+
+    // Auto-format as XXX-XXX-XXX while typing
+    codeInput.addEventListener('input', () => {
+      const d = codeInput.value.replace(/\D/g, '').slice(0, 9);
+      codeInput.value = d.replace(/(\d{3})(?=\d)/g, '$1-');
+    });
+
+    redeemBtn.addEventListener('click', submitCode);
+    codeInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') submitCode(); });
+
+    async function submitCode() {
+      const code = codeInput.value.replace(/\D/g, '');
+      if (code.length !== 9) {
+        codeError('Enter the 9-digit code, like 364-630-153.');
+        codeInput.focus();
+        return;
+      }
+      document.getElementById('code-error').style.display = 'none';
+      redeemBtn.disabled = true;
+      redeemBtn.textContent = 'Checking…';
+      try {
+        const base = await fetchSignalingUrl();
+        if (!base) {
+          codeError('Cannot reach the support server — check your internet and try again.');
+          return;
+        }
+        const res = await fetch(base + '/api/redeem-code?code=' + code, { cache: 'no-store' });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data && data.ok && data.name) {
+          localStorage.setItem('ts_client_name', data.name);
+          localStorage.setItem('ts_install_code', code);   // proves the slot is ours at first register
+          localStorage.removeItem('ts_secret');            // fresh identity
+          // Unattended access: entering a valid code IS the consent step, so
+          // this machine comes up Active and shows online on the support
+          // dashboard immediately -- nobody has to click Enable afterwards.
+          localStorage.setItem('ts_enabled', '1');
+          supportEnabled = true;
+          clientId = data.name;
+          document.getElementById('setup-screen').style.display = 'none';
+          showMainScreen();
+          initialize();
+        } else {
+          codeError(data.error || 'Code not recognized — ask your support agent for a new one.');
+        }
+      } catch (e) {
+        codeError('Could not verify the code — check your internet and try again.');
+      } finally {
+        redeemBtn.disabled = false;
+        redeemBtn.textContent = 'Continue';
+      }
+    }
+
+    function showMainScreen() {
+      document.getElementById('main-screen').style.display = 'flex';
+      document.getElementById('client-id-label').textContent = clientId;
+    }
+
+    // Re-provision this machine with a different installation code. Lets a
+    // support agent move an already-set-up PC to a new slot (or fix a wrong
+    // code) without uninstalling — the only way back to the code screen once
+    // an identity is saved.
+    document.getElementById('reprovision-btn').addEventListener('click', () => {
+      if (!confirm('Set up this computer with a different installation code?\n\nThe current connection will end and you will need a new code from your support agent.'))
+        return;
+      resetToSetup();
+    });
+
+    // Server refused our name (agent deleted / never created) — back to setup.
+    // Keep the old name in a backup key (recoverable) rather than destroying it
+    // outright, and stop the socket so we don't reconnect-and-reject in a loop.
+    function resetToSetup(msg) {
+      const prev = localStorage.getItem('ts_client_name');
+      if (prev) localStorage.setItem('ts_client_name_prev', prev);
+      localStorage.removeItem('ts_client_name');
+      localStorage.removeItem('ts_install_code');
+      localStorage.removeItem('ts_secret');
+      localStorage.setItem('ts_enabled', '0');
+      supportEnabled = false;
+      clientId = null;
+      if (socket) { socket.removeAllListeners(); socket.disconnect(); socket = null; }
+      cleanupPeer();
+      document.getElementById('main-screen').style.display = 'none';
+      document.getElementById('setup-screen').style.display = 'flex';
+      codeInput.value = '';
+      if (msg) codeError(msg);
+    }
+
+    // ── State machine ─────────────────────
+    function setState(state, agentName) {
+      document.getElementById('dot').className = 'dot ' + state;
+      document.getElementById('agent-info').style.display = 'none';
+      const actions = document.getElementById('actions');
+      actions.innerHTML = '';
+
+      const labels = {
+        connecting:   'Connecting...',
+        ready:        'Inactive - support access is off',
+        enabled:      'Active - your support team can connect',
+        waiting:      'Waiting for support agent...',
+        resumed:      'You are still connected with your support agent',
+        in_session:   'Session active — screen is being shared',
+        reconnecting: 'Agent temporarily offline — session preserved',
+        ended:        'Session ended - still active for support',
+        error:        'Offline - reconnecting...'
+      };
+      document.getElementById('status-text').textContent = labels[state] || state;
+
+      // One-word state, so someone glancing at the machine can tell at once
+      // whether support can reach it.
+      const words = {
+        connecting: 'Connecting', ready: 'Inactive', enabled: 'Active',
+        waiting: 'Waiting', resumed: 'Connected', in_session: 'In session',
+        reconnecting: 'In session', ended: 'Active', error: 'Offline'
+      };
+      const word = document.getElementById('state-word');
+      word.textContent = words[state] || state;
+      word.className = 'state-word sw-' + state;
+
+      if (state === 'ready') {
+        actions.innerHTML = `<button class="btn btn-allow" id="btn-allow">Enable Support Access</button>`;
+        document.getElementById('btn-allow').onclick = enableAccess;
+
+      } else if (state === 'enabled') {
+        actions.innerHTML = `<button class="btn btn-disconnect" id="btn-disable">Disable Support Access</button>`;
+        document.getElementById('btn-disable').onclick = disableAccess;
+
+      } else if (state === 'waiting') {
+        actions.innerHTML = `<button class="btn btn-cancel" id="btn-cancel">Cancel — Stop Waiting</button>`;
+        document.getElementById('btn-cancel').onclick = cancelAccess;
+
+      } else if (state === 'resumed') {
+        // The server restored a session from before this app was closed.
+        // Don't auto-share the screen — make the user explicitly resume or
+        // disconnect, so they're never sharing without realising it.
+        if (agentName) {
+          document.getElementById('agent-name').textContent = agentName;
+          document.getElementById('agent-info-suffix').textContent = ' is still connected from your previous session';
+          document.getElementById('agent-info').style.display = 'block';
+        }
+        actions.innerHTML = `
+          <button class="btn btn-allow" id="btn-resume">Resume Screen Share</button>
+          <button class="btn btn-disconnect" id="btn-disconnect">Disconnect Session</button>`;
+        document.getElementById('btn-resume').onclick = resumeSession;
+        document.getElementById('btn-disconnect').onclick = disconnectSession;
+
+      } else if (state === 'in_session') {
+        if (agentName) {
+          document.getElementById('agent-name').textContent = agentName;
+          document.getElementById('agent-info-suffix').textContent = ' is viewing your screen';
+          document.getElementById('agent-info').style.display = 'block';
+        }
+        actions.innerHTML = `<button class="btn btn-disconnect" id="btn-disconnect">Disconnect Session</button>`;
+        document.getElementById('btn-disconnect').onclick = disconnectSession;
+
+      } else if (state === 'reconnecting') {
+        if (agentName) {
+          document.getElementById('agent-name').textContent = agentName;
+          document.getElementById('agent-info-suffix').textContent = ' will reconnect shortly';
+          document.getElementById('agent-info').style.display = 'block';
+        }
+        actions.innerHTML = `<button class="btn btn-disconnect" id="btn-disconnect">Disconnect Session</button>`;
+        document.getElementById('btn-disconnect').onclick = disconnectSession;
+
+      } else if (state === 'error') {
+        // If we lost the signaling socket WHILE still sharing, the screen is
+        // (P2P) potentially still visible — always offer a way to stop.
+        if (localStream) {
+          actions.innerHTML = `<button class="btn btn-disconnect" id="btn-disconnect">Stop Screen Sharing</button>`;
+          document.getElementById('btn-disconnect').onclick = disconnectSession;
+        }
+      }
+    }
+
+    // After a 'resumed' state, the user can re-engage the session manually.
+    let pendingResume = null;  // { supportId, agentName } — populated on restore
+    function resumeSession() {
+      if (!pendingResume) return;
+      const { supportId, agentName } = pendingResume;
+      pendingResume = null;
+      startScreenShare(supportId);
+      setState('in_session', agentName);
+    }
+
+    function enableAccess() {
+      supportEnabled = true;
+      localStorage.setItem('ts_enabled', '1');
+      if (socket) socket.emit('set_availability', { available: true });
+      setState('enabled');
+    }
+
+    // Adopt the server's authoritative availability. The server persists this
+    // flag and may have changed it from the DASHBOARD (support can enable or
+    // disable an agent remotely) — possibly while this app was closed. Adopting
+    // it here is what makes a dashboard toggle stick across restarts, and keeps
+    // the in-app state honest. Availability only ever changes by an explicit
+    // human action (in-app button OR dashboard); closing the app, a kill, a
+    // reboot or a session ending never touch it.
+    function adoptAvailability(available) {
+      supportEnabled = available;
+      localStorage.setItem('ts_enabled', available ? '1' : '0');
+      if (!available) {
+        // Turned off (from the dashboard or the app) — end any live session and go Inactive.
+        if (socket) socket.emit('client_disconnect');
+        cleanupPeer();
+        setState('ready');
+        return;
+      }
+      // Turned on. Never disturb a live or about-to-resume session view.
+      if (localStream || currentSupportId || pendingResume) return;
+      setState('enabled');
+    }
+
+    function disableAccess() {
+      supportEnabled = false;
+      localStorage.setItem('ts_enabled', '0');
+      if (socket) socket.emit('client_disconnect');   // end any live session
+      if (socket) socket.emit('set_availability', { available: false });
+      cleanupPeer();
+      setState('ready');
+    }
+
+    function cancelAccess() {
+      disableAccess();
+    }
+
+    // Disconnect the CURRENT session but stay enabled/available for the next one.
+    function disconnectSession() {
+      if (socket) socket.emit('client_disconnect');
+      cleanupPeer();
+      setState(supportEnabled ? 'enabled' : 'ready');
+    }
+
+    // ── Discovery ─────────────────────────
+    async function fetchSignalingUrl() {
+      for (const url of DISCOVERY_URLS) {
+        try {
+          const res = await fetch(url + '?t=' + Date.now(), { cache: 'no-store' });
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.url) {
+              localStorage.setItem('ts_last_server', data.url);   // survives discovery outages
+              return data.url;
+            }
+          }
+        } catch (e) {}
+      }
+      // Every discovery endpoint is down — fall back to the last server that
+      // worked so existing agents stay reachable through the outage.
+      return localStorage.getItem('ts_last_server') || null;
+    }
+
+    async function initialize() {
+      setState('connecting');
+      const url = await fetchSignalingUrl();
+      if (!url) {
+        setState('error');
+        setTimeout(initialize, 6000);
+        return;
+      }
+      currentSignalingUrl = url;
+      connectToServer(url);
+    }
+
+    // ── Socket connection ─────────────────
+    function connectToServer(url) {
+      if (socket) { socket.removeAllListeners(); socket.disconnect(); }
+
+      socket = io(url, {
+        reconnection: true,
+        reconnectionDelay: 2000,
+        reconnectionAttempts: Infinity,
+        transports: ['websocket', 'polling']
+      });
+
+      socket.on('connect', async () => {
+        let appVersion = 'unknown';
+        try { if (window.electron && window.electron.getAppVersion) appVersion = await window.electron.getAppVersion(); } catch (_) {}
+        let platform = 'win32';
+        try { if (window.electron && window.electron.getPlatform) platform = await window.electron.getPlatform(); } catch (_) {}
+        // installCode proves the pending slot is ours on first bind; secret
+        // authenticates every reconnect after that. Both are optional (a
+        // legacy/already-bound agent simply omits them). platform lets the
+        // server serve the right update feed (win vs mac).
+        socket.emit('register', {
+          type: 'client', clientId, appVersion, platform,
+          installCode: localStorage.getItem('ts_install_code') || '',
+          secret: localStorage.getItem('ts_secret') || ''
+        });
+        refreshIce();
+        // The server is authoritative for availability and sends
+        // 'availability_state' right after we register. Show our last-known
+        // state immediately (no flicker) but DON'T push it to the server — that
+        // would overwrite an enable/disable someone made from the dashboard
+        // while this app was offline.
+        setState(supportEnabled ? 'enabled' : 'ready');
+        // Fallback for a server too old to send availability_state: if none
+        // arrives shortly, assert our saved flag the old way so an enabled
+        // agent still shows Available.
+        if (availabilityStateTimer) clearTimeout(availabilityStateTimer);
+        availabilityStateTimer = setTimeout(() => {
+          availabilityStateTimer = null;
+          if (supportEnabled && socket && socket.connected) socket.emit('set_availability', { available: true });
+        }, 2500);
+      });
+
+      // Authoritative availability from the server (persisted; may have been
+      // changed from the dashboard). Adopt it so dashboard enable/disable sticks.
+      socket.on('availability_state', ({ available }) => {
+        if (availabilityStateTimer) { clearTimeout(availabilityStateTimer); availabilityStateTimer = null; }
+        adoptAvailability(!!available);
+      });
+
+      // Server issued this machine's per-machine secret at bind time. Store it
+      // and drop the one-time install code — future reconnects authenticate
+      // with the secret alone.
+      socket.on('client_bound', ({ secret }) => {
+        if (secret) localStorage.setItem('ts_secret', secret);
+        localStorage.removeItem('ts_install_code');
+      });
+
+      // Dashboard pushed an update (or rollback). payload.allowDowngrade=true for rollback.
+      socket.on('check_update', (payload) => {
+        if (window.electron && window.electron.checkForUpdate) window.electron.checkForUpdate(payload || {});
+      });
+
+      socket.on('disconnect', () => {
+        setState('error');
+        setTimeout(async () => {
+          const newUrl = await fetchSignalingUrl();
+          if (newUrl && newUrl !== currentSignalingUrl) {
+            currentSignalingUrl = newUrl;
+            initialize();
+          }
+        }, 8000);
+      });
+
+      socket.on('connect_error', () => {
+        setState('error');
+        setTimeout(async () => {
+          const newUrl = await fetchSignalingUrl();
+          if (newUrl && newUrl !== currentSignalingUrl) {
+            currentSignalingUrl = newUrl;
+            connectToServer(newUrl);
+          }
+        }, 10000);
+      });
+
+      socket.on('support_request', async ({ supportId, agentName, restored }) => {
+        if (restored && !localStream) {
+          // App was closed/reopened while a session was preserved on the server
+          // and we are NOT currently sharing. Require explicit consent — never
+          // re-share the screen silently after a relaunch.
+          pendingResume = { supportId, agentName };
+          setState('resumed', agentName);
+        } else {
+          // Either a fresh request, or a transient socket blip during a session
+          // that is already sharing (localStream still live). Consent was
+          // already given this run, so re-send the stream automatically so
+          // unattended desks recover without anyone clicking Resume.
+          await startScreenShare(supportId);
+          setState('in_session', agentName);
+        }
+      });
+
+      socket.on('session_ended', () => {
+        cleanupPeer();
+        // Stay enabled/available — the agent stays on the dashboard for the
+        // next session until the user disables or an admin deletes it.
+        setState('ended');
+        setTimeout(() => setState(supportEnabled ? 'enabled' : 'ready'), 2500);
+      });
+
+      socket.on('deleted_by_admin', () => {
+        resetToSetup('This computer was removed by the support team. Enter a new installation code to set it up again.');
+      });
+
+      // Server doesn't recognise this computer (agent deleted, or the name was
+      // never created on the dashboard) — go back to code entry.
+      socket.on('register_rejected', (msg) => {
+        resetToSetup(msg || 'This computer is not set up with the support team. Enter an installation code.');
+      });
+
+      socket.on('agent_reconnecting', ({ agentName }) => {
+        cleanupPeer();
+        setState('reconnecting', agentName);
+      });
+
+      socket.on('answer', async (data) => {
+        if (peerConnection) {
+          try { await peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp)); }
+          catch (e) { console.error('setRemoteDescription:', e); }
+        }
+      });
+
+      socket.on('ice-candidate', async (data) => {
+        if (peerConnection && peerConnection.remoteDescription) {
+          try { await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate)); }
+          catch (e) {}
+        }
+      });
+    }
+
+    // ── WebRTC ────────────────────────────
+    function sessionState(active) {
+      if (window.electron && window.electron.setSessionState) window.electron.setSessionState(active);
+    }
+
+    function cleanupPeer() {
+      currentSupportId = null;
+      if (reshareTimer) { clearTimeout(reshareTimer); reshareTimer = null; }
+      if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
+      if (peerConnection) { peerConnection.close(); peerConnection = null; }
+      dataChannel = null;
+      videoSender = null;
+      sessionState(false);   // no live session → a queued update may now install
+    }
+
+    async function startScreenShare(supportId) {
+      cleanupPeer();
+      currentSupportId = supportId;
+      await refreshIce();
+      try {
+        // Modern capture API — main process auto-selects the screen (no picker).
+        // NOTE: Chromium ignores the `cursor` constraint (the track reports
+        // cursor:'always' whatever is asked), so this machine's cursor is
+        // always embedded in the stream. The dashboard hides its own pointer
+        // over the picture so the agent sees exactly one cursor — the real one.
+        localStream = await navigator.mediaDevices.getDisplayMedia({
+          video: {
+            frameRate: { ideal: 60, max: 60 }
+          },
+          audio: false
+        });
+
+        peerConnection = new RTCPeerConnection(iceConfig);
+
+        // ── Low-latency encode tuning ─────────────────────────────
+        // Chrome treats a screen track like a presentation slide deck
+        // ('detail'): under load it holds resolution and sacrifices FRAMERATE,
+        // which is exactly what reads as "lag" when dragging windows.
+        // 'motion' flips that priority: fluid frame delivery first.
+        const vTrack = localStream.getVideoTracks()[0];
+        try { vTrack.contentHint = 'motion'; } catch (_) {}
+
+        // The capture ends on its own when the captured display goes away —
+        // an RDP client resizing/reconnecting re-creates the session display,
+        // a monitor is unplugged, etc. Left alone the agent keeps a frozen
+        // last frame and every click is mapped against a stale picture.
+        // Re-share while the session is still live so the picture (and the
+        // input mapping, which re-reads the display) follow the new display.
+        const stream = localStream;
+        vTrack.onended = () => {
+          if (!currentSupportId || localStream !== stream) return;
+          console.warn('Capture track ended — restarting screen share');
+          scheduleReshare(500);
+        };
+
+        // sendEncodings: lift the ~2.5 Mbps default bitrate ceiling (screen
+        // content smears, then "catches up") and mark the stream high priority.
+        const vTransceiver = peerConnection.addTransceiver(vTrack, {
+          direction: 'sendonly',
+          streams: [localStream],
+          sendEncodings: [Object.assign({ priority: 'high', networkPriority: 'high' }, QUALITY_PRESETS[currentQuality])]
+        });
+        videoSender = vTransceiver.sender;
+
+        // Prefer H.264: hardware-encoded on virtually every Windows machine,
+        // while the VP8 default is software — far less CPU, higher sustained
+        // fps, lower capture-to-glass latency.
+        try {
+          const caps = RTCRtpSender.getCapabilities('video');
+          const h264 = caps.codecs.filter(c => /h264/i.test(c.mimeType));
+          const rest = caps.codecs.filter(c => !/h264/i.test(c.mimeType));
+          if (h264.length) vTransceiver.setCodecPreferences(h264.concat(rest));
+        } catch (_) {}
+
+        dataChannel = peerConnection.createDataChannel('input', { ordered: true });
+        dataChannel.onmessage = (e) => {
+          try {
+            const msg = JSON.parse(e.data);
+            if (msg.type === 'quality') {
+              applyQuality(msg.level);
+            } else if (msg.type === 'clipboard_write') {
+              window.electron.clipboardWrite(msg.text);
+            } else if (msg.type === 'clipboard_request') {
+              window.electron.clipboardRead().then(text => {
+                if (dataChannel && dataChannel.readyState === 'open')
+                  dataChannel.send(JSON.stringify({ type: 'clipboard_content', text: text || '' }));
+              });
+            } else {
+              window.electron.handleInput(e.data);
+            }
+          } catch (_) {
+            window.electron.handleInput(e.data);
+          }
+        };
+
+        peerConnection.onicecandidate = (e) => {
+          if (e.candidate) socket.emit('ice-candidate', { target: supportId, candidate: e.candidate });
+        };
+
+        peerConnection.oniceconnectionstatechange = () => {
+          console.log('ICE state:', peerConnection.iceConnectionState);
+        };
+
+        peerConnection.onconnectionstatechange = () => {
+          console.log('Connection state:', peerConnection.connectionState);
+        };
+
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+
+        // degradationPreference only sticks once encodings exist (post-sLD):
+        // when bandwidth drops, shrink resolution before dropping frames.
+        try {
+          const p = vTransceiver.sender.getParameters();
+          p.degradationPreference = 'maintain-framerate';
+          await vTransceiver.sender.setParameters(p);
+        } catch (_) {}
+
+        socket.emit('offer', { target: supportId, sdp: offer });
+        sessionState(true);   // live session — hold any pending update until it ends
+      } catch (e) {
+        console.error('startScreenShare error:', e);
+        // No display to capture right now (RDP session between reconnects,
+        // display switching). Keep trying while the session is still wanted.
+        if (currentSupportId === supportId) scheduleReshare(3000);
+      }
+    }
+
+    function scheduleReshare(delayMs) {
+      if (reshareTimer) return;
+      reshareTimer = setTimeout(() => {
+        reshareTimer = null;
+        if (currentSupportId) startScreenShare(currentSupportId);
+      }, delayMs);
+    }
+
+    // ── macOS permissions (Screen Recording + Accessibility) ──────────────
+    // Both are TCC permissions the user grants in System Settings. Without
+    // Screen Recording the shared "screen" is wallpaper-only frames; without
+    // Accessibility the support agent's mouse/keyboard do nothing. Poll and
+    // keep a banner up until both are granted. Screen Recording only takes
+    // effect after an app restart — offer that once it flips to granted.
+    let permScreenAtStart = null;   // first observed state, to detect "granted since launch"
+    let permPollTimer = null;
+
+    async function pollPermissions() {
+      try {
+        if (!window.electron || !window.electron.getPermissions) return;
+        const p = await window.electron.getPermissions();
+        if (p.platform !== 'darwin') { clearInterval(permPollTimer); return; }
+        if (permScreenAtStart === null) permScreenAtStart = p.screen;
+        renderPermBanner(p);
+      } catch (_) {}
+    }
+
+    function permRow(label, ok, btnText, onClick) {
+      const row = document.createElement('div');
+      row.className = 'perm-row';
+      const span = document.createElement('span');
+      span.innerHTML = label + ' — ' + (ok ? '<span class="perm-ok">granted</span>' : 'not granted');
+      row.appendChild(span);
+      if (!ok && btnText) {
+        const btn = document.createElement('button');
+        btn.className = 'perm-btn';
+        btn.textContent = btnText;
+        btn.onclick = onClick;
+        row.appendChild(btn);
+      }
+      return row;
+    }
+
+    function renderPermBanner(p) {
+      const banner = document.getElementById('perm-banner');
+      const screenOk = p.screen === 'granted';
+      const needRestart = screenOk && permScreenAtStart !== 'granted';
+      if (screenOk && p.accessibility && !needRestart && !p.needsMove) { banner.style.display = 'none'; return; }
+
+      banner.innerHTML = '';
+      const title = document.createElement('div');
+      title.className = 'perm-title';
+      title.textContent = 'macOS setup needed for remote support';
+      banner.appendChild(title);
+
+      // Must come first: auto-start + kill-protection only work once the app
+      // lives in Applications. Running from the DMG/Downloads breaks both.
+      if (p.needsMove) {
+        const row = document.createElement('div');
+        row.className = 'perm-row';
+        const span = document.createElement('span');
+        span.innerHTML = 'Move DeskLink to <strong>Applications</strong>, then reopen it';
+        row.appendChild(span);
+        banner.appendChild(row);
+        const note = document.createElement('div');
+        note.className = 'perm-note';
+        note.textContent = 'Open Finder, drag DeskLink into Applications, then launch it from there so it can stay available after you close it or restart.';
+        banner.appendChild(note);
+        banner.style.display = 'block';
+        return;   // fix location first; permissions bind to the final app copy
+      }
+
+      banner.appendChild(permRow('Screen Recording', screenOk, 'Grant…', async () => {
+        // A capture attempt makes macOS register + prompt for the app the
+        // first time; the Settings pane covers the "denied earlier" case.
+        try { await window.electron.getScreenSources(); } catch (_) {}
+        window.electron.openPermissionSettings('screen');
+      }));
+
+      banner.appendChild(permRow('Accessibility (remote control)', p.accessibility, 'Grant…', () => {
+        window.electron.requestAccessibility();      // system prompt + adds app to the list
+        window.electron.openPermissionSettings('accessibility');
+      }));
+
+      if (needRestart) {
+        const row = document.createElement('div');
+        row.className = 'perm-row';
+        const span = document.createElement('span');
+        span.textContent = 'Screen Recording granted — restart to finish';
+        row.appendChild(span);
+        const btn = document.createElement('button');
+        btn.className = 'perm-btn restart';
+        btn.textContent = 'Restart DeskLink';
+        btn.onclick = () => window.electron.relaunchApp();
+        row.appendChild(btn);
+        banner.appendChild(row);
+      } else if (!screenOk || !p.accessibility) {
+        const note = document.createElement('div');
+        note.className = 'perm-note';
+        note.textContent = 'In System Settings → Privacy & Security, switch DeskLink ON under each section above.';
+        banner.appendChild(note);
+      }
+      banner.style.display = 'block';
+    }
+
+    pollPermissions();
+    permPollTimer = setInterval(pollPermissions, 4000);
+  </script>
+</body>
+</html>
