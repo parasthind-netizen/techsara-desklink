@@ -17,6 +17,9 @@ name: Build macOS agent
 
 on:
   workflow_dispatch:
+  push:
+    tags:
+      - 'mac-v*'      # pushing a tag like mac-v1.4.0 triggers a build
 
 jobs:
   build-mac:
