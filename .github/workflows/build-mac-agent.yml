@@ -23,7 +23,11 @@ on:
 
 jobs:
   build-mac:
-    runs-on: macos-14
+    # macos-13 is the Intel runner, available on every plan. The arm64 runner
+    # (macos-14) isn't enabled on this account. electron-builder cross-builds
+    # BOTH arches from here, and the nut-js darwin native module ships a
+    # universal (arm64+x86_64) binary, so both apps work.
+    runs-on: macos-13
     steps:
       - uses: actions/checkout@v4
 
@@ -55,7 +59,10 @@ jobs:
           else
             export CSC_IDENTITY_AUTO_DISCOVERY=false
           fi
-          npx electron-builder --mac --arm64 --x64 $EXTRA
+          # npmRebuild=false: trust the shipped universal prebuilt .node (N-API,
+          # ABI-stable) instead of recompiling it — a cross-arch rebuild on an
+          # Intel runner would otherwise only produce a single-arch binary.
+          npx electron-builder --mac --arm64 --x64 -c.npmRebuild=false $EXTRA
 
       - name: Collect release files
         working-directory: client
