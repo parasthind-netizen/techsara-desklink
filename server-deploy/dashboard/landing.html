@@ -3,162 +3,286 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#070b16">
   <title>DeskLink — Secure Remote Support for Teams | Techsara Solutions</title>
-  <meta name="description" content="DeskLink is enterprise remote-support software: install a lightweight agent on any Windows or Mac, and your support team connects securely from a private dashboard. Unattended access, HD screen sharing, full remote control.">
+  <meta name="description" content="DeskLink is enterprise remote-support software: install a lightweight, visible agent on any Windows or Mac, and your support team connects securely from a private dashboard. Unattended access, HD screen sharing, full remote control.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="DeskLink — Secure Remote Support for Teams">
+  <meta property="og:description" content="A lightweight, visible agent for Windows and Mac. Your support team connects over an encrypted link from a private, per-customer dashboard.">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preload" href="/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/fonts/fonts.css">
   <style>
     :root{
-      --bg:#0b1120; --bg2:#0f172a; --panel:rgba(255,255,255,0.05);
-      --line:rgba(255,255,255,0.10); --text:#e2e8f0; --muted:#94a3b8; --dim:#64748b;
-      --blue:#3b82f6; --violet:#8b5cf6; --green:#10b981;
-      --grad:linear-gradient(135deg,#3b82f6,#8b5cf6);
+      --bg:#070b16; --bg-2:#0b1120;
+      --panel:rgba(255,255,255,0.04); --panel-2:rgba(255,255,255,0.07);
+      --line:rgba(255,255,255,0.09); --line-2:rgba(255,255,255,0.17);
+      --text:#e9edf7; --muted:#a6b1cb; --dim:#6c7997;
+      --blue:#3b82f6; --indigo:#6366f1; --violet:#8b5cf6; --sky:#93c5fd;
+      --green:#34d399; --amber:#fbbf24;
+      --grad:linear-gradient(135deg,#3b82f6 0%,#8b5cf6 100%);
+      --font:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+      --mono:'JetBrains Mono',ui-monospace,'SFMono-Regular',Consolas,monospace;
+      --ease:cubic-bezier(0.2,0.7,0.2,1);
     }
-    *{box-sizing:border-box;margin:0;padding:0}
-    html{scroll-behavior:smooth}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{color-scheme:dark;scroll-behavior:smooth;scroll-padding-top:84px;-webkit-text-size-adjust:100%}
     body{
-      font-family:'Segoe UI',system-ui,-apple-system,Tahoma,sans-serif;
-      background:radial-gradient(1200px 600px at 80% -10%,rgba(139,92,246,0.18),transparent 60%),
-                 radial-gradient(1000px 500px at -10% 10%,rgba(59,130,246,0.18),transparent 55%),
-                 linear-gradient(180deg,#0b1120 0%,#0f172a 100%);
-      color:var(--text);min-height:100vh;line-height:1.55;overflow-x:hidden;
+      font-family:var(--font);font-size:16px;line-height:1.6;color:var(--text);
+      background:
+        radial-gradient(1100px 620px at 82% -8%,rgba(139,92,246,0.20),transparent 62%),
+        radial-gradient(900px 560px at -8% 6%,rgba(59,130,246,0.20),transparent 58%),
+        linear-gradient(180deg,var(--bg) 0%,var(--bg-2) 100%);
+      background-attachment:scroll;
+      min-height:100vh;overflow-x:hidden;
+      -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;
     }
     a{color:inherit;text-decoration:none}
-    .wrap{max-width:1140px;margin:0 auto;padding:0 20px}
+    b,strong{font-weight:650}
+    svg{flex-shrink:0}
+    :focus{outline:none}
+    :focus-visible{outline:2px solid #a5b4fc;outline-offset:3px;border-radius:8px}
+    ::selection{background:rgba(99,102,241,0.45)}
+    .wrap{max-width:1160px;margin:0 auto;padding:0 24px}
+    .ic{fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
 
-    /* NAV */
-    header{position:sticky;top:0;z-index:50;backdrop-filter:blur(12px);
-      background:rgba(11,17,32,0.7);border-bottom:1px solid var(--line)}
-    .nav{display:flex;align-items:center;justify-content:space-between;height:64px}
-    .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.15rem;letter-spacing:-0.01em}
-    .brand .mark{width:34px;height:34px;border-radius:9px;background:var(--grad);display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(59,130,246,0.4)}
-    .brand .mark svg{width:19px;height:19px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-    .brand small{display:block;font-size:0.6rem;font-weight:600;color:var(--dim);letter-spacing:0.08em;text-transform:uppercase;margin-top:-2px}
-    .nav-links{display:flex;align-items:center;gap:28px}
-    .nav-links a{color:var(--muted);font-size:0.9rem;font-weight:500;transition:color .15s}
-    .nav-links a:hover{color:#fff}
-    .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;border:none;border-radius:11px;
-      font-family:inherit;font-weight:700;cursor:pointer;transition:transform .14s,background .2s,box-shadow .2s;white-space:nowrap}
-    .btn-primary{background:var(--grad);color:#fff;padding:11px 20px;font-size:0.92rem;box-shadow:0 8px 22px rgba(79,70,229,0.35)}
-    .btn-primary:hover{transform:translateY(-1px);box-shadow:0 12px 28px rgba(79,70,229,0.45)}
-    .btn-ghost{background:rgba(255,255,255,0.06);color:#fff;border:1px solid var(--line);padding:10px 18px;font-size:0.9rem}
+    /* ── header ── */
+    header{position:sticky;top:0;z-index:50;
+      background:rgba(7,11,22,0.72);border-bottom:1px solid var(--line);
+      backdrop-filter:saturate(160%) blur(14px);-webkit-backdrop-filter:saturate(160%) blur(14px)}
+    .nav{display:flex;align-items:center;justify-content:space-between;gap:16px;height:68px}
+    .brand{display:flex;align-items:center;gap:11px;font-weight:700;font-size:1.1rem;letter-spacing:-0.02em;line-height:1.15}
+    .brand .mark{width:36px;height:36px;border-radius:10px;background:var(--grad);display:flex;align-items:center;justify-content:center;
+      box-shadow:0 8px 22px -6px rgba(99,102,241,0.7),inset 0 1px 0 rgba(255,255,255,0.25)}
+    .brand .mark svg{width:19px;height:19px;color:#fff}
+    .brand small{display:block;font-size:0.62rem;font-weight:600;color:var(--dim);letter-spacing:0.09em;text-transform:uppercase;margin-top:2px}
+    .nav-links{display:flex;align-items:center;gap:6px}
+    .nav-links a{color:var(--muted);font-size:0.9rem;font-weight:500;padding:8px 12px;border-radius:9px;transition:color .15s var(--ease),background .15s var(--ease)}
+    .nav-links a:hover{color:#fff;background:var(--panel)}
+    .nav-cta{display:flex;align-items:center;gap:10px}
+
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;border:1px solid transparent;border-radius:11px;
+      font-family:inherit;font-weight:650;line-height:1;cursor:pointer;white-space:nowrap;
+      height:42px;padding:0 18px;font-size:0.9rem;
+      transition:transform .14s var(--ease),background .2s var(--ease),box-shadow .2s var(--ease),border-color .2s var(--ease)}
+    .btn svg{width:17px;height:17px}
+    .btn-primary{background:var(--grad);color:#fff;box-shadow:0 10px 26px -8px rgba(99,102,241,0.75),inset 0 1px 0 rgba(255,255,255,0.22)}
+    .btn-primary:hover{transform:translateY(-1px);box-shadow:0 14px 32px -8px rgba(99,102,241,0.9),inset 0 1px 0 rgba(255,255,255,0.22)}
+    .btn-ghost{background:var(--panel-2);color:#fff;border-color:var(--line-2)}
     .btn-ghost:hover{background:rgba(255,255,255,0.12)}
-    .btn-lg{padding:15px 26px;font-size:1rem;border-radius:13px}
-    .nav-cta{display:flex;align-items:center;gap:12px}
-    .menu-toggle{display:none}
+    .btn:active{transform:translateY(0)}
+    .btn-lg{height:52px;padding:0 26px;font-size:1rem;border-radius:13px}
+    .btn-lg svg{width:19px;height:19px}
+    .btn[aria-disabled="true"]{background:var(--panel-2);color:var(--muted);border-color:var(--line);box-shadow:none;cursor:default;pointer-events:none}
 
-    /* HERO */
-    .hero{padding:84px 0 56px;text-align:center}
-    .pill{display:inline-flex;align-items:center;gap:8px;background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.3);
-      color:#93c5fd;font-size:0.76rem;font-weight:600;padding:6px 14px;border-radius:999px;margin-bottom:26px}
-    .pill .dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 4px rgba(16,185,129,0.18)}
-    .hero h1{font-size:clamp(2.1rem,5vw,3.6rem);font-weight:800;letter-spacing:-0.02em;line-height:1.08;margin-bottom:20px}
-    .hero h1 .grad{background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-    .hero p.sub{font-size:clamp(1rem,2.2vw,1.22rem);color:var(--muted);max-width:660px;margin:0 auto 34px}
-    .hero-cta{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
-    .os-note{margin-top:16px;font-size:0.8rem;color:var(--dim)}
+    /* ── hero ── */
+    .hero{position:relative;padding:86px 0 28px;text-align:center}
+    /* faint grid behind the hero — sized to the page, so it never widens it */
+    body{position:relative}
+    body::before{content:"";position:absolute;top:0;left:0;right:0;height:820px;z-index:-1;pointer-events:none;
+      background-image:linear-gradient(rgba(255,255,255,0.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.035) 1px,transparent 1px);
+      background-size:56px 56px;background-position:center top;
+      -webkit-mask-image:radial-gradient(ellipse 60% 70% at 50% 30%,#000 20%,transparent 75%);
+              mask-image:radial-gradient(ellipse 60% 70% at 50% 30%,#000 20%,transparent 75%)}
+    .pill{display:inline-flex;align-items:center;gap:9px;background:rgba(99,102,241,0.14);border:1px solid rgba(129,140,248,0.34);
+      color:#c7d2fe;font-size:0.8rem;font-weight:600;padding:7px 15px 7px 12px;border-radius:999px;margin-bottom:28px}
+    .pill .dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 4px rgba(52,211,153,0.18)}
+    .hero h1{font-size:clamp(2.3rem,5.6vw,4rem);font-weight:700;letter-spacing:-0.04em;line-height:1.05;
+      max-width:1010px;margin:0 auto 22px;text-wrap:balance}
+    .grad{background:linear-gradient(120deg,#60a5fa,#a78bfa 70%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+    .hero p.sub{font-size:clamp(1.02rem,2vw,1.2rem);line-height:1.6;color:var(--muted);max-width:660px;margin:0 auto 34px;text-wrap:pretty}
+    .hero-cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+    .os-note{margin-top:18px;font-size:0.84rem;color:var(--dim);min-height:1.4em}
 
-    .hero-visual{margin:56px auto 0;max-width:900px;border-radius:18px;border:1px solid var(--line);
-      background:linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02));
-      box-shadow:0 40px 90px -30px rgba(0,0,0,0.7);overflow:hidden}
-    .hv-bar{display:flex;align-items:center;gap:7px;padding:12px 16px;border-bottom:1px solid var(--line);background:rgba(0,0,0,0.25)}
-    .hv-bar i{width:11px;height:11px;border-radius:50%;display:block}
-    .hv-bar i:nth-child(1){background:#f87171}.hv-bar i:nth-child(2){background:#fbbf24}.hv-bar i:nth-child(3){background:#34d399}
-    .hv-bar span{margin-left:12px;font-size:0.74rem;color:var(--dim);font-family:'Courier New',monospace}
-    .hv-body{display:grid;grid-template-columns:200px 1fr;min-height:300px}
-    .hv-side{border-right:1px solid var(--line);padding:18px 14px;background:rgba(0,0,0,0.15)}
-    .hv-side .s-title{font-size:0.66rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--dim);margin:0 0 12px 4px}
-    .hv-agent{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:9px;margin-bottom:6px;font-size:0.82rem}
-    .hv-agent:hover,.hv-agent.on{background:rgba(59,130,246,0.12)}
-    .hv-agent .st{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-    .st.g{background:var(--green)}.st.a{background:#fbbf24}.st.o{background:#475569}
-    .hv-main{padding:22px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center}
-    .hv-screen{width:100%;height:170px;border-radius:12px;border:1px solid var(--line);
-      background:linear-gradient(135deg,rgba(59,130,246,0.14),rgba(139,92,246,0.14));display:flex;align-items:center;justify-content:center}
-    .hv-screen svg{width:46px;height:46px;stroke:rgba(255,255,255,0.5);fill:none;stroke-width:1.5}
-    .hv-caption{font-size:0.82rem;color:var(--muted)}
+    /* ── product preview (a miniature of the real console) ── */
+    .mock{position:relative;margin:64px auto 0;max-width:1040px;text-align:left;
+      border-radius:16px;border:1px solid var(--line-2);background:#0a0f1e;
+      box-shadow:0 60px 130px -50px rgba(99,102,241,0.55),0 34px 70px -34px rgba(0,0,0,0.9)}
+    .mock::before{content:"";position:absolute;inset:-1px;border-radius:17px;z-index:-1;
+      background:linear-gradient(135deg,rgba(96,165,250,0.5),rgba(167,139,250,0.12) 40%,rgba(167,139,250,0.5));filter:blur(22px);opacity:.55}
+    .mock-bar{display:flex;align-items:center;gap:7px;height:42px;padding:0 16px;border-bottom:1px solid var(--line);background:rgba(255,255,255,0.03);border-radius:16px 16px 0 0}
+    .mock-bar i{width:11px;height:11px;border-radius:50%;background:#2a3350}
+    .mock-url{margin:0 auto;display:flex;align-items:center;gap:7px;height:24px;padding:0 14px;border-radius:7px;background:rgba(255,255,255,0.05);
+      font-family:var(--mono);font-size:0.7rem;color:var(--dim);transform:translateX(-26px)}
+    .mock-url svg{width:11px;height:11px;color:var(--green)}
+    .mock-app{display:grid;grid-template-columns:196px 1fr;min-height:380px}
+    .m-side{border-right:1px solid var(--line);padding:16px 12px;background:#0d1326;border-radius:0 0 0 16px}
+    .m-brand{display:flex;align-items:center;gap:9px;padding:2px 6px 14px;font-weight:700;font-size:0.88rem;letter-spacing:-0.01em}
+    .m-brand span{width:26px;height:26px;border-radius:8px;background:var(--grad);display:flex;align-items:center;justify-content:center}
+    .m-brand svg{width:14px;height:14px;color:#fff}
+    .m-cap{font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--dim);margin:12px 8px 6px}
+    .m-nav{display:flex;align-items:center;gap:9px;height:32px;padding:0 9px;border-radius:8px;font-size:0.78rem;font-weight:550;color:var(--muted)}
+    .m-nav svg{width:15px;height:15px}
+    .m-nav.on{background:rgba(99,102,241,0.18);color:#c7d2fe}
+    .m-nav em{margin-left:auto;font-style:normal;font-size:0.66rem;font-weight:700;padding:1px 7px;border-radius:999px;background:rgba(255,255,255,0.07);color:var(--muted)}
+    .m-main{padding:18px 20px 22px;min-width:0}
+    .m-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
+    .m-top b{display:block;font-size:0.98rem;font-weight:650;letter-spacing:-0.015em}
+    .m-top span{font-size:0.72rem;color:var(--dim)}
+    .m-chip{display:inline-flex;align-items:center;gap:7px;height:24px;padding:0 11px;border-radius:999px;background:rgba(52,211,153,0.13);color:#4ade9f !important;font-size:0.7rem !important;font-weight:650}
+    .m-chip i{width:6px;height:6px;border-radius:50%;background:var(--green)}
+    .m-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+    .m-kpi{padding:12px 13px;border:1px solid var(--line);border-radius:12px;background:#0f1528}
+    .m-kpi .k-ic{width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:9px}
+    .m-kpi .k-ic svg{width:14px;height:14px}
+    .k1{background:rgba(99,102,241,0.16);color:#aab4ff}.k2{background:rgba(52,211,153,0.13);color:#4ade9f}
+    .k3{background:rgba(96,165,250,0.14);color:#8dc0ff}.k4{background:rgba(251,191,36,0.13);color:#fbbf24}
+    .m-kpi b{display:block;font-size:1.3rem;font-weight:700;letter-spacing:-0.03em;line-height:1.1}
+    .m-kpi span{font-size:0.7rem;color:var(--muted)}
+    .m-card{border:1px solid var(--line);border-radius:12px;background:#0f1528;overflow:hidden}
+    .m-card-h{padding:12px 14px;border-bottom:1px solid var(--line)}
+    .m-card-h b{display:block;font-size:0.82rem;font-weight:650}
+    .m-card-h span{font-size:0.7rem;color:var(--dim)}
+    .m-row{display:flex;align-items:center;gap:11px;padding:10px 14px;border-bottom:1px solid var(--line)}
+    .m-row:last-child{border-bottom:0}
+    .m-os{position:relative;width:30px;height:30px;border-radius:9px;background:#1a2340;display:flex;align-items:center;justify-content:center;color:#a6b1cb}
+    .m-os svg{width:14px;height:14px;fill:currentColor}
+    .m-os::after{content:"";position:absolute;right:-2px;bottom:-2px;width:8px;height:8px;border-radius:50%;background:var(--green);border:2px solid #0f1528}
+    .m-row div{min-width:0;flex:1}
+    .m-row b{display:block;font-size:0.8rem;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .m-row div span{font-size:0.68rem;color:var(--dim)}
+    .m-btn{height:26px;padding:0 12px;border-radius:8px;background:#5b5bf0;color:#fff;font-size:0.7rem;font-weight:650;display:inline-flex;align-items:center}
+    .m-live{height:24px;padding:0 10px;border-radius:999px;background:rgba(96,165,250,0.14);color:#8dc0ff;font-size:0.68rem;font-weight:650;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+    .m-live i{width:6px;height:6px;border-radius:50%;background:#60a5fa;animation:pulse 1.8s ease-in-out infinite}
+    @keyframes pulse{50%{opacity:.35}}
 
-    /* STATS */
-    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin:64px 0}
-    .stat{text-align:center;padding:22px 12px;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
-    .stat b{display:block;font-size:1.9rem;font-weight:800;background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-    .stat span{font-size:0.8rem;color:var(--muted)}
+    /* ── stats ── */
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;margin:72px 0 8px;border:1px solid var(--line);border-radius:18px;overflow:hidden;background:var(--line)}
+    .stat{padding:26px 20px;background:#0a0f1e;text-align:center}
+    .stat b{display:block;font-size:1.9rem;font-weight:700;letter-spacing:-0.035em;line-height:1.1;margin-bottom:6px}
+    .stat span{font-size:0.84rem;color:var(--muted)}
 
-    /* SECTION */
-    section{padding:64px 0}
-    .sec-head{text-align:center;max-width:640px;margin:0 auto 44px}
-    .sec-head .tag{font-size:0.76rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#a78bfa;margin-bottom:12px}
-    .sec-head h2{font-size:clamp(1.7rem,3.5vw,2.4rem);font-weight:800;letter-spacing:-0.02em;margin-bottom:14px}
-    .sec-head p{color:var(--muted);font-size:1.02rem}
+    /* ── sections ── */
+    section{padding:76px 0}
+    .sec-head{text-align:center;max-width:680px;margin:0 auto 48px}
+    .tag{font-size:0.75rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#a78bfa;margin-bottom:14px}
+    .sec-head h2,.access h2{font-size:clamp(1.75rem,3.6vw,2.5rem);font-weight:700;letter-spacing:-0.035em;line-height:1.12;margin-bottom:16px;text-wrap:balance}
+    .sec-head p{color:var(--muted);font-size:1.05rem;text-wrap:pretty}
 
-    /* FEATURES */
-    .features{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-    .feature{padding:26px 24px;border:1px solid var(--line);border-radius:16px;background:var(--panel);transition:transform .16s,border-color .2s}
-    .feature:hover{transform:translateY(-3px);border-color:rgba(139,92,246,0.4)}
-    .feature .ic{width:46px;height:46px;border-radius:12px;background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.25);display:flex;align-items:center;justify-content:center;margin-bottom:16px}
-    .feature .ic svg{width:23px;height:23px;stroke:#93c5fd;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-    .feature h3{font-size:1.06rem;font-weight:700;margin-bottom:8px}
-    .feature p{font-size:0.9rem;color:var(--muted)}
+    .features{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+    .feature{padding:26px 24px 28px;border:1px solid var(--line);border-radius:16px;background:var(--panel);
+      transition:transform .18s var(--ease),border-color .2s var(--ease),background .2s var(--ease)}
+    .feature:hover{transform:translateY(-3px);border-color:rgba(129,140,248,0.45);background:var(--panel-2)}
+    .f-ic{width:44px;height:44px;border-radius:12px;background:rgba(99,102,241,0.14);border:1px solid rgba(129,140,248,0.28);display:flex;align-items:center;justify-content:center;margin-bottom:18px;color:#c7d2fe}
+    .f-ic svg{width:21px;height:21px}
+    .feature h3,.step h3,.consent-item h3{font-size:1.05rem;font-weight:650;letter-spacing:-0.015em;margin-bottom:8px}
+    .feature p,.step p,.consent-item p{font-size:0.93rem;line-height:1.6;color:var(--muted)}
 
-    /* STEPS */
-    .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;counter-reset:step}
+    .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
     .step{position:relative;padding:28px 24px;border:1px solid var(--line);border-radius:16px;background:var(--panel)}
-    .step .num{width:40px;height:40px;border-radius:11px;background:var(--grad);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;margin-bottom:16px;font-size:1.05rem}
-    .step h3{font-size:1.08rem;font-weight:700;margin-bottom:8px}
-    .step p{font-size:0.9rem;color:var(--muted)}
-    .step .email{color:#93c5fd;font-weight:600}
+    .step .num{width:38px;height:38px;border-radius:11px;background:var(--grad);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;margin-bottom:18px;font-size:1rem;
+      box-shadow:0 8px 20px -8px rgba(99,102,241,0.8)}
+    .link{color:var(--sky);font-weight:600}
+    .link:hover{text-decoration:underline}
 
-    /* DOWNLOAD */
-    .download{border:1px solid var(--line);border-radius:22px;padding:48px 36px;text-align:center;
-      background:linear-gradient(135deg,rgba(59,130,246,0.08),rgba(139,92,246,0.08))}
-    .dl-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:720px;margin:32px auto 0}
-    .dl-card{padding:28px 22px;border:1px solid var(--line);border-radius:16px;background:rgba(0,0,0,0.25);text-align:center;transition:border-color .2s,transform .16s}
-    .dl-card:hover{border-color:rgba(59,130,246,0.5);transform:translateY(-2px)}
-    .dl-card.suggested{border-color:rgba(59,130,246,0.6);box-shadow:0 0 0 3px rgba(59,130,246,0.12)}
-    .dl-os{width:54px;height:54px;margin:0 auto 14px;display:flex;align-items:center;justify-content:center}
-    .dl-os svg{width:46px;height:46px;fill:#cbd5e1}
-    .dl-card h3{font-size:1.12rem;font-weight:700;margin-bottom:4px}
-    .dl-card .meta{font-size:0.78rem;color:var(--dim);margin-bottom:16px}
-    .dl-card .btn{width:100%}
-    .dl-sub{margin-top:10px;font-size:0.74rem;color:var(--dim)}
-    .dl-sub a{color:#7dd3fc}
-    .suggest-badge{display:inline-block;font-size:0.68rem;font-weight:700;color:#93c5fd;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);padding:3px 10px;border-radius:999px;margin-bottom:12px}
+    /* ── consent band ── */
+    .consent{display:grid;grid-template-columns:1.05fr 1.4fr;gap:44px;align-items:center;
+      padding:44px;border:1px solid var(--line);border-radius:22px;
+      background:linear-gradient(135deg,rgba(52,211,153,0.07),rgba(99,102,241,0.07))}
+    .consent .tag{color:#4ade9f}
+    .consent h2{font-size:clamp(1.6rem,3vw,2.1rem);font-weight:700;letter-spacing:-0.035em;line-height:1.14;margin-bottom:14px;text-wrap:balance}
+    .consent > div > p{color:var(--muted);font-size:1rem}
+    .consent-list{display:grid;gap:14px}
+    .consent-item{display:flex;gap:16px;align-items:flex-start;padding:18px 20px;border:1px solid var(--line);border-radius:14px;background:rgba(7,11,22,0.5)}
+    .consent-item .c-ic{flex:0 0 38px;width:38px;height:38px;border-radius:11px;background:rgba(52,211,153,0.13);color:#4ade9f;display:flex;align-items:center;justify-content:center}
+    .consent-item .c-ic svg{width:19px;height:19px}
+    .consent-item h3{font-size:0.98rem;margin-bottom:3px}
+    .consent-item p{font-size:0.89rem}
 
-    /* ACCESS */
-    .access{border:1px solid var(--line);border-radius:22px;padding:48px 36px;text-align:center;background:var(--panel)}
-    .access h2{font-size:clamp(1.6rem,3vw,2.1rem);font-weight:800;margin-bottom:12px}
-    .access p{color:var(--muted);max-width:560px;margin:0 auto 10px}
-    .access .mail{display:inline-flex;align-items:center;gap:10px;margin-top:22px;background:rgba(0,0,0,0.3);border:1px solid var(--line);
-      border-radius:12px;padding:14px 22px;font-size:1.05rem;font-weight:700;color:#fff}
-    .access .mail svg{width:20px;height:20px;stroke:#93c5fd;fill:none;stroke-width:2}
-    .access .steps-inline{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:26px;font-size:0.84rem;color:var(--muted)}
-    .access .steps-inline span{background:rgba(255,255,255,0.05);border:1px solid var(--line);border-radius:999px;padding:7px 16px}
+    /* ── download ── */
+    .download{border:1px solid var(--line);border-radius:22px;padding:56px 36px;text-align:center;
+      background:radial-gradient(700px 300px at 50% 0%,rgba(99,102,241,0.16),transparent 70%),var(--panel)}
+    .dl-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;max-width:740px;margin:36px auto 0}
+    .dl-card{display:flex;flex-direction:column;align-items:center;padding:30px 24px 24px;border:1px solid var(--line);border-radius:18px;background:rgba(7,11,22,0.55);
+      transition:border-color .2s var(--ease),transform .18s var(--ease)}
+    .dl-card:hover{border-color:var(--line-2);transform:translateY(-2px)}
+    .dl-card.suggested{border-color:rgba(129,140,248,0.7);box-shadow:0 0 0 4px rgba(99,102,241,0.14)}
+    .dl-os{width:52px;height:52px;display:flex;align-items:center;justify-content:center;margin-bottom:14px;color:#dbe2f3}
+    .dl-os svg{width:42px;height:42px;fill:currentColor}
+    .dl-badge{min-height:26px;margin-bottom:8px}
+    .suggest-badge{display:inline-block;font-size:0.7rem;font-weight:700;color:#c7d2fe;background:rgba(99,102,241,0.18);border:1px solid rgba(129,140,248,0.36);padding:3px 11px;border-radius:999px}
+    .suggest-badge.soon{color:var(--amber);background:rgba(251,191,36,0.12);border-color:rgba(251,191,36,0.3)}
+    .dl-card h3{font-size:1.15rem;font-weight:650;letter-spacing:-0.02em;margin-bottom:4px}
+    .dl-card .meta{font-size:0.82rem;color:var(--dim);margin-bottom:20px}
+    .dl-card .btn{width:100%;height:46px;margin-top:auto}
+    .dl-sub{margin-top:12px;font-size:0.78rem;color:var(--dim);min-height:1.5em}
+    .dl-sub a{color:var(--sky)}
+    .dl-sub a:hover{text-decoration:underline}
+    .dl-foot{margin-top:26px;font-size:0.88rem;color:var(--dim)}
 
-    /* FOOTER */
-    footer{border-top:1px solid var(--line);margin-top:40px;padding:36px 0;color:var(--dim);font-size:0.84rem}
-    .foot{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
-    .foot-links{display:flex;gap:22px}
-    .foot-links a{color:var(--muted)}
-    .foot-links a:hover{color:#fff}
+    /* ── access ── */
+    .access{border:1px solid var(--line);border-radius:22px;padding:56px 36px;text-align:center;background:var(--panel)}
+    .access p{color:var(--muted);max-width:580px;margin:0 auto 10px;text-wrap:pretty}
+    .access .mail{display:inline-flex;align-items:center;gap:11px;margin-top:22px;background:rgba(7,11,22,0.6);border:1px solid var(--line-2);
+      border-radius:13px;padding:15px 24px;font-size:1.05rem;font-weight:650;color:#fff;transition:border-color .2s var(--ease),background .2s var(--ease)}
+    .access .mail:hover{border-color:rgba(129,140,248,0.7);background:rgba(99,102,241,0.12)}
+    .access .mail svg{width:20px;height:20px;color:var(--sky)}
+    .steps-inline{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:26px;font-size:0.86rem;color:var(--muted)}
+    .steps-inline span{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:7px 16px}
+    .steps-inline b{color:#c7d2fe;margin-right:6px}
 
-    @media(max-width:860px){
+    /* ── footer ── */
+    footer{border-top:1px solid var(--line);margin-top:24px;padding:34px 0 40px;color:var(--dim);font-size:0.86rem}
+    .foot{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:18px}
+    .foot .brand{font-size:1rem;color:var(--text)}
+    .foot .brand .mark{width:28px;height:28px;border-radius:8px;box-shadow:none}
+    .foot .brand .mark svg{width:15px;height:15px}
+    .foot-links{display:flex;gap:6px;flex-wrap:wrap}
+    .foot-links a{color:var(--muted);padding:6px 10px;border-radius:8px}
+    .foot-links a:hover{color:#fff;background:var(--panel)}
+
+    /* ── gentle entrance as cards scroll into view (progressive enhancement) ── */
+    @supports (animation-timeline: view()) {
+      @media (prefers-reduced-motion: no-preference) {
+        .reveal{animation:rise linear both;animation-timeline:view();animation-range:entry 0% entry 55%}
+        @keyframes rise{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+      }
+    }
+    @media (prefers-reduced-motion: reduce){
+      html{scroll-behavior:auto}
+      *,*::before,*::after{animation:none !important;transition:none !important}
+    }
+
+    @media (max-width:980px){
+      .consent{grid-template-columns:1fr;gap:28px;padding:32px 24px}
+    }
+    @media (max-width:860px){
       .nav-links{display:none}
-      .hv-body{grid-template-columns:1fr}.hv-side{display:none}
-      .stats{grid-template-columns:repeat(2,1fr)}
-      .features{grid-template-columns:1fr}
-      .steps{grid-template-columns:1fr}
+      .hero{padding-top:60px}
+      .mock{margin-top:48px}
+      .mock-app{grid-template-columns:1fr}
+      .m-side{display:none}
+      .m-kpis{grid-template-columns:repeat(2,1fr)}
+      .stats{grid-template-columns:repeat(2,1fr);margin-top:56px}
+      .features,.steps{grid-template-columns:1fr}
       .dl-grid{grid-template-columns:1fr}
+      section{padding:56px 0}
+      .download,.access{padding:40px 22px}
+    }
+    @media (max-width:560px){
+      .wrap{padding:0 18px}
+      .nav{height:60px}
+      .brand small,.nav-cta .btn-primary{display:none}
+      .hero-cta .btn{width:100%}
+      .m-main{padding:14px}
+      .m-live{display:none}
+      .mock-url{transform:none}
+      .foot{flex-direction:column;align-items:flex-start}
     }
   </style>
 </head>
 <body>
   <header>
     <div class="wrap nav">
-      <a class="brand" href="#top">
-        <span class="mark"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span>
-        <span>DeskLink<small>by Techsara Solutions</small></span>
+      <a class="brand" href="#top" aria-label="DeskLink home">
+        <span class="mark"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></span>
+        <span><span data-brand>DeskLink</span><small>by Techsara Solutions</small></span>
       </a>
-      <nav class="nav-links">
+      <nav class="nav-links" aria-label="Sections">
         <a href="#features">Features</a>
         <a href="#how">How it works</a>
+        <a href="#trust">Privacy</a>
         <a href="#download">Download</a>
         <a href="#access">Get access</a>
       </nav>
@@ -169,35 +293,54 @@
     </div>
   </header>
 
-  <a id="top"></a>
-  <main class="wrap">
+  <main class="wrap" id="top">
     <!-- HERO -->
-    <section class="hero" style="padding-top:70px">
-      <span class="pill"><span class="dot"></span> Enterprise remote support · Windows &amp; macOS</span>
-      <h1>Remote support your customers can <span class="grad">trust</span>,<br>from one secure dashboard.</h1>
-      <p class="sub">DeskLink puts a lightweight, visible agent on any Windows or Mac. Your support team connects over an encrypted peer-to-peer link — HD screen sharing and full remote control, with every customer kept in their own private workspace.</p>
+    <section class="hero">
+      <span class="pill"><span class="dot"></span>Enterprise remote support · Windows &amp; macOS</span>
+      <h1>Remote support your customers can <span class="grad">trust</span>, from one secure dashboard.</h1>
+      <p class="sub"><span data-brand>DeskLink</span> puts a lightweight, visible agent on any Windows or Mac. Your support team connects over an encrypted link — HD screen sharing and full remote control, with every customer kept in their own private workspace.</p>
       <div class="hero-cta">
-        <a class="btn btn-primary btn-lg" href="#download">Download the agent</a>
+        <a class="btn btn-primary btn-lg" href="#download">
+          <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          Download the agent
+        </a>
         <a class="btn btn-ghost btn-lg" href="#access">Get dashboard access</a>
       </div>
-      <div class="os-note" id="os-note">Detecting your system…</div>
+      <div class="os-note" id="os-note" aria-live="polite"></div>
 
-      <!-- Product mock -->
-      <div class="hero-visual">
-        <div class="hv-bar"><i></i><i></i><i></i><span>dashboard.techsara — DeskLink</span></div>
-        <div class="hv-body">
-          <div class="hv-side">
-            <p class="s-title">Your agents</p>
-            <div class="hv-agent on"><span class="st g"></span> Reception-PC</div>
-            <div class="hv-agent"><span class="st g"></span> Accounts-Mac</div>
-            <div class="hv-agent"><span class="st a"></span> Warehouse-01</div>
-            <div class="hv-agent"><span class="st o"></span> Store-Backup</div>
+      <!-- Product preview: a miniature of the real console -->
+      <div class="mock" aria-hidden="true">
+        <div class="mock-bar"><i></i><i></i><i></i>
+          <span class="mock-url"><svg class="ic" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span data-brand>DeskLink</span>&nbsp;console</span>
+        </div>
+        <div class="mock-app">
+          <div class="m-side">
+            <div class="m-brand"><span><svg class="ic" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></span><b data-brand>DeskLink</b></div>
+            <p class="m-cap">Workspace</p>
+            <div class="m-nav on"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Overview</div>
+            <div class="m-nav"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M2 20h20"/></svg>Agents<em>5</em></div>
+            <div class="m-nav"><svg class="ic" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Install Agent</div>
+            <div class="m-nav"><svg class="ic" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Activity</div>
+            <p class="m-cap">Organization</p>
+            <div class="m-nav"><svg class="ic" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Team</div>
           </div>
-          <div class="hv-main">
-            <div class="hv-screen">
-              <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          <div class="m-main">
+            <div class="m-top">
+              <div><b>Overview</b><span>Your fleet at a glance</span></div>
+              <span class="m-chip"><i></i>Connected</span>
             </div>
-            <div class="hv-caption">Live screen from <b>Reception-PC</b> · encrypted P2P · 60 fps</div>
+            <div class="m-kpis">
+              <div class="m-kpi"><div class="k-ic k1"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg></div><b>4</b><span>Online now</span></div>
+              <div class="m-kpi"><div class="k-ic k2"><svg class="ic" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg></div><b>3</b><span>Available</span></div>
+              <div class="m-kpi"><div class="k-ic k3"><svg class="ic" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div><b>1</b><span>In session</span></div>
+              <div class="m-kpi"><div class="k-ic k4"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div><b>1</b><span>Awaiting install</span></div>
+            </div>
+            <div class="m-card">
+              <div class="m-card-h"><b>Your agents</b><span>Reachable right now</span></div>
+              <div class="m-row"><span class="m-os"><svg viewBox="0 0 24 24"><path d="M3 5.5 10.5 4.3v7.2H3V5.5zM10.5 12.5v7.2L3 18.5v-6h7.5zM11.6 4.15 21 2.8v8.7h-9.4V4.15zM21 12.5v8.7l-9.4-1.35V12.5H21z"/></svg></span><div><b>Reception-PC</b><span>Windows · unattended</span></div><span class="m-live"><i></i>In session · live</span></div>
+              <div class="m-row"><span class="m-os"><svg viewBox="0 0 24 24"><path d="M16.5 2.1c.1 1-.3 2-1 2.7-.7.8-1.8 1.4-2.8 1.3-.1-1 .4-2 1-2.7.8-.8 2-1.3 2.8-1.3zM19.3 17c-.5 1.2-.8 1.7-1.5 2.7-1 1.4-2.3 3.1-4 3.1-1.5 0-1.9-1-3.9-1-2 0-2.5 1-3.9 1-1.7 0-3-1.6-4-3C-.2 16-.6 11 1.6 8.3c1-1.3 2.6-2.1 4.1-2.1 1.6 0 2.6 1 3.9 1 1.3 0 2-1 3.9-1 1.4 0 2.9.8 3.9 2.1-3.4 1.9-2.9 6.8.9 8.7z"/></svg></span><div><b>Accounts-MacBook</b><span>macOS · unattended</span></div><span class="m-btn">Connect</span></div>
+              <div class="m-row"><span class="m-os"><svg viewBox="0 0 24 24"><path d="M3 5.5 10.5 4.3v7.2H3V5.5zM10.5 12.5v7.2L3 18.5v-6h7.5zM11.6 4.15 21 2.8v8.7h-9.4V4.15zM21 12.5v8.7l-9.4-1.35V12.5H21z"/></svg></span><div><b>Warehouse-01</b><span>Windows · unattended</span></div><span class="m-btn">Connect</span></div>
+            </div>
           </div>
         </div>
       </div>
@@ -205,49 +348,49 @@
 
     <!-- STATS -->
     <div class="stats">
-      <div class="stat"><b>2</b><span>Platforms — Windows &amp; macOS</span></div>
-      <div class="stat"><b>&lt;3s</b><span>Auto-reconnect after a restart</span></div>
-      <div class="stat"><b>60fps</b><span>Hardware-accelerated screen share</span></div>
-      <div class="stat"><b>100%</b><span>Private per-customer dashboards</span></div>
+      <div class="stat"><b class="grad">2</b><span>Platforms — Windows &amp; macOS</span></div>
+      <div class="stat"><b class="grad">~2 s</b><span>Back online if the app is closed</span></div>
+      <div class="stat"><b class="grad">60 fps</b><span>Smooth, adaptive screen sharing</span></div>
+      <div class="stat"><b class="grad">100%</b><span>Private per-customer workspaces</span></div>
     </div>
 
     <!-- FEATURES -->
     <section id="features">
       <div class="sec-head">
-        <div class="tag">Why DeskLink</div>
+        <div class="tag">Why <span data-brand>DeskLink</span></div>
         <h2>Everything a support team needs, nothing it doesn't</h2>
         <p>Built for unattended help desks and managed fleets — reliable, cross-platform, and private by design.</p>
       </div>
       <div class="features">
-        <div class="feature">
-          <div class="ic"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
+        <div class="feature reveal">
+          <div class="f-ic"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
           <h3>Windows &amp; macOS</h3>
-          <p>One agent, both platforms — Apple Silicon and Intel included. Your dashboard manages a mixed fleet without a second thought.</p>
+          <p>One console for a mixed fleet. The same agent experience on Windows 10/11 and on Apple Silicon and Intel Macs.</p>
         </div>
-        <div class="feature">
-          <div class="ic"><svg viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></svg></div>
+        <div class="feature reveal">
+          <div class="f-ic"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></svg></div>
           <h3>Low-latency screen share</h3>
-          <p>Hardware-encoded H.264 over WebRTC with adaptive quality, so dragging a window feels instant even on a slow link.</p>
+          <p>Adaptive quality over WebRTC keeps the picture sharp and the pointer responsive, even on a slow link.</p>
         </div>
-        <div class="feature">
-          <div class="ic"><svg viewBox="0 0 24 24"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/></svg></div>
+        <div class="feature reveal">
+          <div class="f-ic"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 3 7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/></svg></div>
           <h3>Full remote control</h3>
           <p>Pixel-accurate mouse and keyboard across multi-monitor and high-DPI setups, with clipboard sync both ways.</p>
         </div>
-        <div class="feature">
-          <div class="ic"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+        <div class="feature reveal">
+          <div class="f-ic"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
           <h3>Private per customer</h3>
-          <p>Every customer gets an isolated dashboard. No customer can see, reach, or interact with another customer's machines — ever.</p>
+          <p>Every customer gets an isolated workspace. No customer can see, reach, or interact with another customer's machines.</p>
         </div>
-        <div class="feature">
-          <div class="ic"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 11-3-6.7M21 3v6h-6"/></svg></div>
+        <div class="feature reveal">
+          <div class="f-ic"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7M21 3v6h-6"/></svg></div>
           <h3>Always on, self-healing</h3>
-          <p>A built-in watchdog brings the agent back within seconds if it's closed or killed, and it returns automatically after a reboot.</p>
+          <p>The agent comes back within seconds if it is closed, and returns on its own after a reboot — ideal for unattended desks.</p>
         </div>
-        <div class="feature">
-          <div class="ic"><svg viewBox="0 0 24 24"><path d="M12 2v6m0 0 3-3m-3 3L9 5M4 13h16l-1.5 7h-13z"/></svg></div>
-          <h3>Push-button updates</h3>
-          <p>Staged rollouts with a canary step and one-click rollback — update the whole fleet safely, per platform, from the console.</p>
+        <div class="feature reveal">
+          <div class="f-ic"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+          <h3>Logins for your whole team</h3>
+          <p>Give each support person their own login. Everyone on your team reaches the same machines — and nobody else's.</p>
         </div>
       </div>
     </section>
@@ -257,23 +400,48 @@
       <div class="sec-head">
         <div class="tag">How it works</div>
         <h2>From request to remote session in minutes</h2>
-        <p>No public sign-up. Access is granted by our team so every customer starts in their own secured workspace.</p>
+        <p>No public sign-up. Access is granted by our team, so every customer starts in their own secured workspace.</p>
       </div>
       <div class="steps">
-        <div class="step">
+        <div class="step reveal">
           <div class="num">1</div>
           <h3>Get your Customer ID</h3>
-          <p>Email <span class="email">support@techsarasolutions.com</span>. Our team creates your private dashboard and sends you a Customer ID and login.</p>
+          <p>Email <a class="link" href="mailto:support@techsarasolutions.com">support@techsarasolutions.com</a>. Our team creates your private dashboard and sends you a Customer ID and login.</p>
         </div>
-        <div class="step">
+        <div class="step reveal">
           <div class="num">2</div>
           <h3>Install the agent</h3>
-          <p>Download DeskLink for Windows or Mac, run it, and enter the installation code from your dashboard. The machine comes online instantly.</p>
+          <p>Create an installation code in your dashboard, run <span data-brand>DeskLink</span> on the computer and enter the code. The machine comes online straight away.</p>
         </div>
-        <div class="step">
+        <div class="step reveal">
           <div class="num">3</div>
           <h3>Connect &amp; support</h3>
-          <p>Log in, pick a machine, and view or control its screen securely. It stays reachable for unattended support until you disable it.</p>
+          <p>Log in, pick a machine, and view or control its screen securely. It stays reachable for unattended support until access is turned off.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONSENT / PRIVACY -->
+    <section id="trust">
+      <div class="consent">
+        <div>
+          <div class="tag">Visible by design</div>
+          <h2>The person at the computer always stays in control</h2>
+          <p><span data-brand>DeskLink</span> is consent-based remote assistance. It never hides, and it can always be switched off or removed by the person using the machine.</p>
+        </div>
+        <div class="consent-list">
+          <div class="consent-item reveal">
+            <span class="c-ic"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span>
+            <div><h3>Always visible</h3><p>A tray or menu-bar icon is always present, and an on-screen notice shows who is viewing whenever a session is live.</p></div>
+          </div>
+          <div class="consent-item reveal">
+            <span class="c-ic"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M18.36 6.64a9 9 0 1 1-12.73 0M12 2v10"/></svg></span>
+            <div><h3>One click to stop</h3><p>“Disable Support Access” makes the computer unreachable, and “Disconnect Session” ends a live session instantly.</p></div>
+          </div>
+          <div class="consent-item reveal">
+            <span class="c-ic"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></span>
+            <div><h3>Removable like any app</h3><p>Uninstall it whenever you like — an uninstaller is provided on both Windows and macOS.</p></div>
+          </div>
         </div>
       </div>
     </section>
@@ -281,51 +449,53 @@
     <!-- DOWNLOAD -->
     <section id="download">
       <div class="download">
-        <div class="sec-head" style="margin-bottom:8px">
+        <div class="sec-head" style="margin-bottom:0">
           <div class="tag">Download</div>
-          <h2>Get the DeskLink agent</h2>
-          <p>Free to install. Pick your platform — we've highlighted the one that matches your device.</p>
+          <h2>Get the <span data-brand>DeskLink</span> agent</h2>
+          <p>Free to install. Pick your platform — the one that matches this device is highlighted.</p>
         </div>
         <div class="dl-grid">
           <div class="dl-card" id="dl-win">
-            <div class="dl-os"><svg viewBox="0 0 24 24"><path d="M3 5.5 10.5 4.3v7.2H3V5.5zM10.5 12.5v7.2L3 18.5v-6h7.5zM11.6 4.15 21 2.8v8.7h-9.4V4.15zM21 12.5v8.7l-9.4-1.35V12.5H21z"/></svg></div>
-            <div id="win-badge"></div>
+            <div class="dl-os"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5.5 10.5 4.3v7.2H3V5.5zM10.5 12.5v7.2L3 18.5v-6h7.5zM11.6 4.15 21 2.8v8.7h-9.4V4.15zM21 12.5v8.7l-9.4-1.35V12.5H21z"/></svg></div>
+            <div class="dl-badge" id="win-badge"></div>
             <h3>Windows</h3>
-            <div class="meta">Windows 10 / 11 · ~80 MB</div>
-            <a class="btn btn-primary" href="/download/windows-zip">Download for Windows</a>
-            <div class="dl-sub">ZIP (AV-friendly) · <a href="/download/windows">direct .exe</a></div>
+            <div class="meta" id="win-meta">Windows 10 / 11 · 64-bit</div>
+            <a class="btn btn-primary" id="win-btn" href="/download/windows-zip">Download for Windows</a>
+            <div class="dl-sub" id="win-sub">ZIP download · <a href="/download/windows">direct .exe</a></div>
           </div>
           <div class="dl-card" id="dl-mac">
-            <div class="dl-os"><svg viewBox="0 0 24 24"><path d="M16.5 2.1c.1 1-.3 2-1 2.7-.7.8-1.8 1.4-2.8 1.3-.1-1 .4-2 1-2.7.8-.8 2-1.3 2.8-1.3zM19.3 17c-.5 1.2-.8 1.7-1.5 2.7-1 1.4-2.3 3.1-4 3.1-1.5 0-1.9-1-3.9-1-2 0-2.5 1-3.9 1-1.7 0-3-1.6-4-3C-.2 16-.6 11 1.6 8.3c1-1.3 2.6-2.1 4.1-2.1 1.6 0 2.6 1 3.9 1 1.3 0 2-1 3.9-1 1.4 0 2.9.8 3.9 2.1-3.4 1.9-2.9 6.8.9 8.7z"/></svg></div>
-            <div id="mac-badge"></div>
+            <div class="dl-os"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.5 2.1c.1 1-.3 2-1 2.7-.7.8-1.8 1.4-2.8 1.3-.1-1 .4-2 1-2.7.8-.8 2-1.3 2.8-1.3zM19.3 17c-.5 1.2-.8 1.7-1.5 2.7-1 1.4-2.3 3.1-4 3.1-1.5 0-1.9-1-3.9-1-2 0-2.5 1-3.9 1-1.7 0-3-1.6-4-3C-.2 16-.6 11 1.6 8.3c1-1.3 2.6-2.1 4.1-2.1 1.6 0 2.6 1 3.9 1 1.3 0 2-1 3.9-1 1.4 0 2.9.8 3.9 2.1-3.4 1.9-2.9 6.8.9 8.7z"/></svg></div>
+            <div class="dl-badge" id="mac-badge"></div>
             <h3>macOS</h3>
-            <div class="meta">macOS 11+ · Apple Silicon &amp; Intel</div>
-            <a class="btn btn-primary" href="/download/mac">Download for Mac</a>
-            <div class="dl-sub">Apple Silicon · <a href="/download/mac?arch=intel">Intel Mac</a></div>
+            <div class="meta" id="mac-meta">macOS 11 or later · Apple Silicon &amp; Intel</div>
+            <a class="btn btn-primary" id="mac-btn" aria-disabled="true">Coming soon</a>
+            <div class="dl-sub" id="mac-sub">In final testing</div>
           </div>
         </div>
-        <p style="margin-top:22px;font-size:0.82rem;color:var(--dim)">You'll need a <b>Customer ID</b> and an installation code to activate the agent. <a href="#access" style="color:#7dd3fc">Get access →</a></p>
+        <p class="dl-foot">You need a <b>Customer ID</b> and an installation code to activate the agent. <a class="link" href="#access">Get access →</a></p>
       </div>
     </section>
 
     <!-- ACCESS -->
     <section id="access">
       <div class="access">
-        <div class="tag" style="color:#a78bfa;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;font-size:0.76rem;margin-bottom:12px">Get started</div>
+        <div class="tag">Get started</div>
         <h2>Request your dashboard access</h2>
-        <p>DeskLink doesn't use public sign-ups — each customer is onboarded by our team so your workspace is private and secure from day one.</p>
+        <p><span data-brand>DeskLink</span> doesn't use public sign-ups — each customer is onboarded by our team so your workspace is private and secure from day one.</p>
         <p>Email us and we'll set up your isolated dashboard, issue your <b>Customer ID</b>, and send your login details.</p>
         <a class="mail" href="mailto:support@techsarasolutions.com?subject=DeskLink%20access%20request&body=Hello%20Techsara%20team,%0D%0A%0D%0AWe'd%20like%20DeskLink%20dashboard%20access.%0D%0A%0D%0ACompany%20name:%0D%0ANumber%20of%20machines:%0D%0AContact%20person:%0D%0A%0D%0AThank%20you.">
-          <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/></svg>
+          <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/></svg>
           support@techsarasolutions.com
         </a>
         <div class="steps-inline">
-          <span>1 · Email us</span>
-          <span>2 · Receive your Customer ID &amp; login</span>
-          <span>3 · Install the agent &amp; connect</span>
+          <span><b>1</b>Email us</span>
+          <span><b>2</b>Receive your Customer ID &amp; login</span>
+          <span><b>3</b>Install the agent &amp; connect</span>
         </div>
-        <div style="margin-top:28px">
-          <a class="btn btn-ghost btn-lg" href="/dashboard">Already have access? Log in →</a>
+        <div style="margin-top:30px">
+          <a class="btn btn-ghost btn-lg" href="/dashboard">Already have access? Log in
+            <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
         </div>
       </div>
     </section>
@@ -333,42 +503,22 @@
 
   <footer>
     <div class="wrap foot">
-      <div class="brand" style="font-size:1rem">
-        <span class="mark" style="width:28px;height:28px"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span>
-        <span>DeskLink</span>
+      <div class="brand">
+        <span class="mark"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></span>
+        <span data-brand>DeskLink</span>
       </div>
-      <div class="foot-links">
+      <nav class="foot-links" aria-label="Footer">
         <a href="#features">Features</a>
+        <a href="#trust">Privacy</a>
         <a href="#download">Download</a>
         <a href="#access">Get access</a>
         <a href="/dashboard">Log in</a>
         <a href="mailto:support@techsarasolutions.com">Support</a>
-      </div>
+      </nav>
       <div>© 2026 Techsara Solutions. All rights reserved.</div>
     </div>
   </footer>
 
-  <script>
-    // Highlight the visitor's platform on the download cards + hero note.
-    (function(){
-      var ua = navigator.userAgent || '';
-      var plat = navigator.platform || '';
-      var isMac = /Mac/.test(plat) || /Macintosh/.test(ua);
-      var isWin = /Win/.test(plat) || /Windows/.test(ua);
-      var note = document.getElementById('os-note');
-      function badge(txt){ return '<span class="suggest-badge">'+txt+'</span>'; }
-      if (isMac){
-        document.getElementById('dl-mac').classList.add('suggested');
-        document.getElementById('mac-badge').innerHTML = badge('Recommended for your Mac');
-        if (note) note.innerHTML = 'Detected macOS — the Mac download is highlighted below.';
-      } else if (isWin){
-        document.getElementById('dl-win').classList.add('suggested');
-        document.getElementById('win-badge').innerHTML = badge('Recommended for your PC');
-        if (note) note.innerHTML = 'Detected Windows — the Windows download is highlighted below.';
-      } else {
-        if (note) note.textContent = 'Available for Windows and macOS.';
-      }
-    })();
-  </script>
+  <script src="/landing.js"></script>
 </body>
 </html>
