@@ -60,6 +60,23 @@ if (!app.requestSingleInstanceLock()) {
 
 app.commandLine.appendSwitch('enable-usermedia-screen-capturing');
 
+// ── Black-screen fix for RDP / other remote tools ──
+// Chromium's screen capturer uses DXGI desktop duplication when the GPU is
+// available. DXGI returns BLACK frames when the machine is driven over RDP
+// (the RDP display adapter doesn't support duplication) and in some setups
+// where another remote tool (AnyDesk/Zoom) holds the GPU capture. Disabling
+// hardware acceleration forces the GDI/BitBlt capturer, which captures the
+// desktop in those cases. Trade-off: slightly higher CPU (software encode) on
+// normal machines — accepted here because an agent that shows a black screen
+// is useless, and reliability is the priority for unattended support.
+// NOTE: this does NOT cover the Windows lock screen or a different user's
+// session — those live on separate desktops and require the LocalSystem
+// service + native capture helper (tracked separately).
+app.disableHardwareAcceleration();
+// Prefer the GDI capturer and avoid the DirectComposition path that can also
+// come back black under RDP.
+app.commandLine.appendSwitch('disable-direct-composition');
+
 // The renderer owns the WebRTC capture + encode. Chromium deprioritizes
 // hidden/occluded windows, which turns the remote view choppy the moment the
 // user closes (hides) this window mid-session — so background dispensations

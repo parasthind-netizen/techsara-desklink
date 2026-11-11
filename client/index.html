@@ -367,6 +367,20 @@
       } catch (e) { /* keep STUN-only fallback */ }
     }
 
+    // ── Product branding (owner-configurable, pushed from the server) ─────
+    // Show the last-known brand immediately (cached), then the server sends the
+    // current one on connect and live-updates it whenever the owner changes it.
+    let brandName = localStorage.getItem('ts_brand') || 'DeskLink';
+    function applyBrand(name) {
+      name = String(name || '').trim();
+      if (!name) return;
+      brandName = name;
+      try { localStorage.setItem('ts_brand', name); } catch (_) {}
+      document.title = name;
+      document.querySelectorAll('.logo').forEach(el => el.textContent = name);
+    }
+    applyBrand(brandName);
+
     // ── Startup: check for saved name ─────
     const savedName = localStorage.getItem('ts_client_name');
     if (savedName) {
@@ -646,6 +660,10 @@
         return;
       }
       currentSignalingUrl = url;
+      // Fetch the current brand before the socket is up, so the first screen
+      // already shows the owner's product name.
+      fetch(url + '/branding', { cache: 'no-store' }).then(r => r.ok ? r.json() : null)
+        .then(d => { if (d && d.name) applyBrand(d.name); }).catch(() => {});
       connectToServer(url);
     }
 
@@ -697,6 +715,9 @@
         if (availabilityStateTimer) { clearTimeout(availabilityStateTimer); availabilityStateTimer = null; }
         adoptAvailability(!!available);
       });
+
+      // Product name from the server — applied live when the owner renames it.
+      socket.on('branding', (d) => { if (d && d.name) applyBrand(d.name); });
 
       // Server issued this machine's per-machine secret at bind time. Store it
       // and drop the one-time install code — future reconnects authenticate

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Techsara Remote Support</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="/style.css">
 </head>
 <body>
 
@@ -46,6 +46,7 @@
       </button>
       <nav class="tab-strip" id="tab-strip"></nav>
       <div class="topbar-right">
+        <span id="cid-chip" title="Your Customer ID" style="display:none;font-size:12px;font-weight:700;color:#93c5fd;background:rgba(59,130,246,0.14);border:1px solid rgba(59,130,246,0.3);padding:5px 11px;border-radius:999px;letter-spacing:0.03em;"></span>
         <div class="server-indicator" id="server-indicator" title="Server connection"></div>
         <button class="top-icon-btn" id="bell-btn" title="Agents waiting">
           <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
@@ -88,11 +89,17 @@
           </span>
           <span class="tile-label">My Account</span>
         </button>
+        <button class="tile team-owner-only" data-open="team" style="display:none;">
+          <span class="tile-icon" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </span>
+          <span class="tile-label">Team</span>
+        </button>
         <button class="tile admin-only" data-open="admin" style="display:none;">
           <span class="tile-icon tile-icon-admin">
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
           </span>
-          <span class="tile-label">Admin Panel</span>
+          <span class="tile-label">Owner Console</span>
         </button>
       </div>
     </section>
@@ -218,6 +225,28 @@
       </div>
     </section>
 
+    <!-- ── TEAM (a customer's support people) ── -->
+    <section class="view" id="view-team" style="display:none;">
+      <div class="simple-panel" style="width:min(820px,94%);">
+        <div class="simple-panel-head"><h3>Add team member</h3></div>
+        <div class="admin-form">
+          <div class="af-field" style="flex:1;min-width:240px;">
+            <label>Team member name</label>
+            <input type="text" id="tm-name" placeholder="e.g. Priya (Support)" autocomplete="off">
+          </div>
+          <button class="btn-primary af-btn" id="tm-create">Create login</button>
+        </div>
+        <p class="muted small">Each team member gets their own login and can access <b>all of your organization's machines</b>. You hand them the login + password shown after you create them.</p>
+        <div class="admin-msg" id="team-msg" style="display:none;"></div>
+
+        <div class="simple-panel-head" style="margin-top:26px;"><h3>Your team</h3></div>
+        <table class="admin-table">
+          <thead><tr><th>Name</th><th>Login</th><th>Status</th><th></th></tr></thead>
+          <tbody id="team-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
     <!-- ── MY ACCOUNT ── -->
     <section class="view" id="view-account" style="display:none;">
       <div class="simple-panel">
@@ -238,31 +267,35 @@
     <section class="view" id="view-admin" style="display:none;">
       <div class="simple-panel" style="width:min(900px,94%);">
 
-        <div class="simple-panel-head"><h3>Create support user</h3></div>
+        <div class="simple-panel-head"><h3>Add customer</h3></div>
         <div class="admin-form">
-          <div class="af-field">
-            <label>Username</label>
-            <input type="text" id="nu-username" placeholder="e.g. rahul" autocomplete="off">
+          <div class="af-field" style="flex:1;min-width:220px;">
+            <label>Customer / company name</label>
+            <input type="text" id="nc-name" placeholder="e.g. Acme Retail Pvt Ltd" autocomplete="off">
           </div>
-          <div class="af-field">
-            <label>Password</label>
-            <input type="text" id="nu-password" placeholder="min 6 chars" autocomplete="off">
+          <div class="af-field" style="max-width:150px;">
+            <label>Team member limit</label>
+            <input type="number" id="nc-limit" min="0" max="1000" value="5" autocomplete="off">
           </div>
-          <div class="af-field">
-            <label>Access level</label>
-            <select id="nu-role">
-              <option value="support">Support agent</option>
-              <option value="admin">Administrator</option>
-            </select>
-          </div>
-          <button class="btn-primary af-btn" id="nu-create">Create user</button>
+          <button class="btn-primary af-btn" id="nc-create">Create customer</button>
         </div>
+        <p class="muted small">Each customer gets a private, isolated dashboard, a <b>Customer ID</b>, and a login password you hand over. They only ever see their own machines. <b>Team member limit</b> = how many extra support logins this customer may create (0 = none).</p>
         <div class="admin-msg" id="admin-msg" style="display:none;"></div>
 
-        <div class="simple-panel-head" style="margin-top:26px;"><h3>Users</h3></div>
+        <div class="simple-panel-head" style="margin-top:26px;"><h3>App name (branding)</h3></div>
+        <div class="admin-form">
+          <div class="af-field" style="flex:1;min-width:220px;">
+            <label>Product name shown in every agent</label>
+            <input type="text" id="brand-name" placeholder="DeskLink" maxlength="40" autocomplete="off">
+          </div>
+          <button class="btn-primary af-btn" id="brand-save">Save &amp; push to all agents</button>
+        </div>
+        <p class="muted small">Changes the name shown inside the agent app on every computer. Agents on the latest version update instantly; older agents pick it up after they update. (The installer filename and Windows/Mac app name change only with a rebuild.)</p>
+
+        <div class="simple-panel-head" style="margin-top:26px;"><h3>Customers</h3></div>
         <table class="admin-table">
-          <thead><tr><th>Username</th><th>Access level</th><th>Created by</th><th></th></tr></thead>
-          <tbody id="users-tbody"></tbody>
+          <thead><tr><th>Customer ID</th><th>Name</th><th>Status</th><th>Machines</th><th>Team</th><th></th></tr></thead>
+          <tbody id="customers-tbody"></tbody>
         </table>
 
         <div class="simple-panel-head" style="margin-top:26px;"><h3>Push app update</h3></div>
@@ -290,6 +323,24 @@
       </div>
     </section>
 
+  </div>
+
+  <!-- ══════════ CUSTOMER CREDENTIALS MODAL ══════════ -->
+  <div class="modal-overlay" id="cust-cred-modal" style="display:none;">
+    <div class="modal-card">
+      <h3 id="cc-title">Customer created</h3>
+      <p class="muted small" id="cc-sub" style="margin:6px 0 16px;">Hand these details to the customer. The password is shown only once — copy it now.</p>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="cc-row"><span class="cc-k">Customer ID</span><b class="cc-v" id="cc-id"></b></div>
+        <div class="cc-row"><span class="cc-k">Login</span><b class="cc-v" id="cc-login"></b></div>
+        <div class="cc-row"><span class="cc-k">Password</span><b class="cc-v" id="cc-pass"></b></div>
+        <div class="cc-row"><span class="cc-k">Dashboard</span><b class="cc-v" id="cc-url"></b></div>
+      </div>
+      <div class="modal-actions" style="margin-top:18px;">
+        <button class="btn-light" id="cc-copy">Copy all</button>
+        <button class="btn-primary btn-inline" id="cc-done">Done</button>
+      </div>
+    </div>
   </div>
 
   <!-- ══════════ CREATE AGENT MODAL ══════════ -->
@@ -345,6 +396,6 @@
   </div>
 
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-  <script src="script.js"></script>
+  <script src="/script.js"></script>
 </body>
 </html>

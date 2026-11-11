@@ -255,6 +255,13 @@ input  { font-family: inherit; }
 .win-logo span:nth-child(3) { background: #7fc3ea; }
 .win-logo span:nth-child(4) { background: #f8d97f; }
 .os-mac { font-size: 11px; font-weight: 600; color: #9a9a9a; letter-spacing: 0.02em; }
+.cc-row { display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  background: rgba(0,0,0,0.28); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 11px 14px; }
+.cc-k { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: #94a3b8; }
+.cc-v { font-family: 'Courier New', monospace; font-size: 15px; color: #e8ecf3; font-weight: 700; word-break: break-all; text-align: right; }
+.cust-pill { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+.cust-pill.active { color: #34d399; background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3); }
+.cust-pill.suspended { color: #f87171; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); }
 .agent-card-owner {
   padding: 3px 16px 0;
   font-size: 11px; color: #9a9a9a;

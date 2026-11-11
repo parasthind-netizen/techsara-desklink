@@ -50,18 +50,20 @@ const TAB_TITLES = {
   activity: 'Analyze events',
   install:  'Install Agent',
   account:  'My Account',
-  admin:    'Admin Panel'
+  team:     'Team',
+  admin:    'Owner Console'
 };
 let openTabs    = [];
 let currentView = 'home';
 
 function showView(id) {
   currentView = id;
-  ['home', 'agents', 'session', 'activity', 'install', 'account', 'admin'].forEach(v => {
+  ['home', 'agents', 'session', 'activity', 'install', 'account', 'team', 'admin'].forEach(v => {
     const el = document.getElementById('view-' + v);
     if (el) el.style.display = (v === id) ? (v === 'agents' || v === 'session' ? 'flex' : 'block') : 'none';
   });
-  if (id === 'admin') { socket.emit('admin_list_users'); socket.emit('admin_feed_info'); }
+  if (id === 'admin') { socket.emit('admin_list_users'); socket.emit('admin_feed_info'); socket.emit('admin_get_brand'); }
+  if (id === 'team') socket.emit('team_list');
   renderTabs();
 }
 
@@ -167,27 +169,47 @@ function doLogin() {
   socket.emit('register', { type: 'support', username: name, password: pwd });
 }
 
+let agentCustomerId  = '';
+let agentDisplayName = '';
+let agentIsTenantOwner = false;
 socket.on('login_success', (info) => {
   agentRole = (info && info.role) || 'support';
   if (info && info.username) agentName = info.username;
+  agentCustomerId  = (info && info.customerId) || '';
+  agentDisplayName = (info && info.displayName) || '';
+  agentIsTenantOwner = !!(info && info.isTenantOwner);
+  const isAdmin = agentRole === 'admin';
   // A silent re-login after a reconnect must not yank the user back to Home.
   const freshLogin = document.getElementById('login-screen').style.display !== 'none';
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').style.display = 'flex';
-  document.getElementById('acct-name').textContent   = agentName;
-  document.getElementById('acct-role').textContent   = agentRole === 'admin' ? 'Administrator' : 'Support agent';
+  // Owner sees their login; a customer sees their company name + Customer ID.
+  document.getElementById('acct-name').textContent = isAdmin ? agentName : (agentDisplayName || agentName);
+  document.getElementById('acct-role').textContent = isAdmin
+    ? 'Product Owner'
+    : ('Customer' + (agentCustomerId ? ' · ' + agentCustomerId : ''));
   document.getElementById('acct-server').textContent = window.location.origin;
   document.getElementById('acct-conn').textContent   = 'Connected';
   document.getElementById('copy-url').textContent    = window.location.origin + '/download.html';
 
-  // Show/hide admin-only UI
-  const isAdmin = agentRole === 'admin';
+  // Customer ID chip in the header (customers only).
+  const cidChip = document.getElementById('cid-chip');
+  if (cidChip) {
+    if (!isAdmin && agentCustomerId) { cidChip.textContent = agentCustomerId; cidChip.style.display = ''; }
+    else cidChip.style.display = 'none';
+  }
+
+  // Show/hide owner-only UI
   document.querySelectorAll('.admin-only').forEach(el => el.style.display = isAdmin ? '' : 'none');
+  // The Team feature is for a customer's main account (tenant owner) only —
+  // not the product owner, not individual team members.
+  const showTeam = !isAdmin && agentIsTenantOwner;
+  document.querySelectorAll('.team-owner-only').forEach(el => el.style.display = showTeam ? '' : 'none');
 
   refreshIce();
-  socket.emit('list_support_users');
+  if (isAdmin) socket.emit('list_support_users');   // owner-only on the server now
   if (freshLogin) showView('home');
-  log('Login successful — welcome, ' + agentName + ' (' + agentRole + ')');
+  log('Login successful — welcome, ' + (agentDisplayName || agentName) + ' (' + (isAdmin ? 'owner' : 'customer ' + agentCustomerId) + ')');
 });
 
 socket.on('force_logout', (msg) => {
@@ -239,13 +261,27 @@ function hardLogout() {
   agentRole = 'support';
 }
 
-/* ═══════════════ ADMIN PANEL ═══════════════ */
-document.getElementById('nu-create').addEventListener('click', () => {
-  const username = document.getElementById('nu-username').value.trim();
-  const password = document.getElementById('nu-password').value;
-  const role     = document.getElementById('nu-role').value;
-  if (!username || !password) return adminMsg('Enter a username and password', true);
-  socket.emit('admin_create_user', { username, password, role });
+/* ═══════════════ OWNER CONSOLE ═══════════════ */
+document.getElementById('nc-create').addEventListener('click', () => {
+  const displayName = document.getElementById('nc-name').value.trim();
+  if (displayName.length < 2) return adminMsg('Enter the customer / company name', true);
+  const teamLimit = parseInt(document.getElementById('nc-limit').value, 10);
+  socket.emit('admin_create_customer', { displayName, teamLimit: Number.isFinite(teamLimit) ? teamLimit : 5 });
+});
+
+/* ── App branding ── */
+socket.on('admin_brand', (d) => {
+  const el = document.getElementById('brand-name');
+  if (el && d && d.name) el.value = d.name;
+});
+document.getElementById('brand-save').addEventListener('click', () => {
+  const name = document.getElementById('brand-name').value.trim();
+  if (name.length < 2) return adminMsg('Enter an app name (2-40 characters)', true);
+  if (confirm('Set the app name to "' + name + '" and push it to all online agents now?'))
+    socket.emit('admin_set_brand', { name });
+});
+document.getElementById('nc-name').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('nc-create').click();
 });
 
 function adminMsg(text, isError) {
@@ -259,30 +295,179 @@ function adminMsg(text, isError) {
 socket.on('admin_error', (msg) => adminMsg(msg, true));
 socket.on('admin_ok', (msg) => {
   adminMsg(msg, false);
-  document.getElementById('nu-username').value = '';
-  document.getElementById('nu-password').value = '';
+  document.getElementById('nc-name').value = '';
+});
+
+// Show the one-time credentials modal (after create OR password reset).
+function showCredModal(title, sub, d, opts) {
+  opts = opts || {};
+  document.getElementById('cc-title').textContent = title;
+  document.getElementById('cc-sub').textContent   = sub;
+  document.getElementById('cc-id').textContent    = d.customerId || '—';
+  document.getElementById('cc-login').textContent = d.username || (d.customerId || '').toLowerCase();
+  document.getElementById('cc-pass').textContent  = d.password || '—';
+  document.getElementById('cc-url').textContent   = window.location.origin + '/dashboard';
+  // Team members have a login but no Customer ID — hide that row for them.
+  const idRow = document.getElementById('cc-id').closest('.cc-row');
+  if (idRow) idRow.style.display = opts.hideId ? 'none' : '';
+  document.getElementById('cust-cred-modal').style.display = 'flex';
+}
+socket.on('customer_created', (d) => {
+  showCredModal('Customer created', 'Hand these details to the customer. The password is shown only once — copy it now.', d);
+});
+socket.on('password_reset_ok', (d) => {
+  showCredModal('Password reset', 'Give the customer their new password. It is shown only once.', d);
+});
+document.getElementById('cc-copy').addEventListener('click', () => {
+  const idRow = document.getElementById('cc-id').closest('.cc-row');
+  const showId = !idRow || idRow.style.display !== 'none';
+  const txt = 'DeskLink dashboard access\n'
+    + 'Dashboard: ' + document.getElementById('cc-url').textContent + '\n'
+    + (showId ? 'Customer ID: ' + document.getElementById('cc-id').textContent + '\n' : '')
+    + 'Login: ' + document.getElementById('cc-login').textContent + '\n'
+    + 'Password: ' + document.getElementById('cc-pass').textContent;
+  navigator.clipboard.writeText(txt).then(() => {
+    const b = document.getElementById('cc-copy'); b.textContent = 'Copied!';
+    setTimeout(() => { b.textContent = 'Copy all'; }, 1600);
+  });
+});
+
+/* ═══════════════ TEAM (customer's support people) ═══════════════ */
+function teamMsg(text, isError) {
+  const m = document.getElementById('team-msg');
+  if (!m) return;
+  m.textContent = text;
+  m.className = 'admin-msg ' + (isError ? 'err' : 'ok');
+  m.style.display = 'block';
+  setTimeout(() => { m.style.display = 'none'; }, 4000);
+}
+document.getElementById('tm-create').addEventListener('click', () => {
+  const displayName = document.getElementById('tm-name').value.trim();
+  if (displayName.length < 2) return teamMsg('Enter the team member\'s name', true);
+  socket.emit('team_create', { displayName });
+});
+document.getElementById('tm-name').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('tm-create').click();
+});
+socket.on('team_error', (msg) => teamMsg(msg, true));
+socket.on('team_ok', (msg) => teamMsg(msg, false));
+socket.on('team_member_created', (d) => {
+  document.getElementById('tm-name').value = '';
+  showCredModal('Team member login created',
+    'Give these to your team member. The password is shown only once — copy it now.',
+    { username: d.username, password: d.password }, { hideId: true });
+});
+socket.on('team_password_reset', (d) => {
+  showCredModal('Password reset',
+    'Give your team member their new password. It is shown only once.',
+    { username: d.username, password: d.password }, { hideId: true });
+});
+socket.on('team_list', (members) => {
+  const tb = document.getElementById('team-tbody');
+  if (!tb) return;
+  tb.innerHTML = '';
+  const others = (members || []).filter(m => !m.isTenantOwner);  // don't list the owner's own account
+  if (!others.length) {
+    tb.innerHTML = '<tr><td colspan="4" class="muted">No team members yet. Add one above so your colleagues get their own login.</td></tr>';
+    return;
+  }
+  others.forEach(m => {
+    const tr = document.createElement('tr');
+    const status = m.suspended ? '<span class="cust-pill suspended">Suspended</span>'
+                 : m.online ? '<span class="cust-pill active">Online</span>'
+                 : '<span class="cust-pill active" style="color:#9a9a9a;background:rgba(148,163,184,0.12);border-color:rgba(148,163,184,0.3);">Offline</span>';
+    tr.innerHTML = `<td>${m.displayName || m.username}</td><td><b>${m.username}</b></td><td>${status}</td>`
+      + `<td style="text-align:right;white-space:nowrap;"></td>`;
+    const cell = tr.lastElementChild;
+    const rst = document.createElement('button');
+    rst.className = 'tbl-btn'; rst.textContent = 'Reset password';
+    rst.addEventListener('click', () => {
+      if (confirm('Reset the password for "' + (m.displayName || m.username) + '"? They will be logged out and need the new password.'))
+        socket.emit('team_reset_password', { username: m.username });
+    });
+    cell.appendChild(rst);
+    const del = document.createElement('button');
+    del.className = 'tbl-del'; del.textContent = 'Remove';
+    del.addEventListener('click', () => {
+      if (confirm('Remove "' + (m.displayName || m.username) + '" from your team? Their login stops working immediately.'))
+        socket.emit('team_remove', { username: m.username });
+    });
+    cell.appendChild(del);
+    tb.appendChild(tr);
+  });
+});
+document.getElementById('cc-done').addEventListener('click', () => {
+  document.getElementById('cust-cred-modal').style.display = 'none';
+});
+document.getElementById('cust-cred-modal').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('cust-cred-modal')) document.getElementById('cust-cred-modal').style.display = 'none';
 });
 
 socket.on('admin_users', (list) => {
-  const tb = document.getElementById('users-tbody');
+  const tb = document.getElementById('customers-tbody');
+  if (!tb) return;
   tb.innerHTML = '';
-  list.forEach(u => {
+  // Customers are the tenant-OWNER support accounts; team members are managed
+  // by the customer, not shown here.
+  const customers = list.filter(u => u.role !== 'admin' && u.isTenantOwner);
+  if (!customers.length) {
+    tb.innerHTML = '<tr><td colspan="6" class="muted">No customers yet. Add one above.</td></tr>';
+  }
+  customers.forEach(u => {
     const tr = document.createElement('tr');
-    const isSelf = u.username === agentName;
+    const statusPill = u.suspended
+      ? '<span class="cust-pill suspended">Suspended</span>'
+      : '<span class="cust-pill active">Active</span>';
+    const used = u.teamCount || 0, lim = (u.teamLimit === undefined ? 5 : u.teamLimit);
+    const teamCell = `<span class="muted">${used} / ${lim}</span> <button class="tbl-btn" data-limit="1" style="padding:2px 8px;">Edit</button>`;
     tr.innerHTML =
-      `<td>${u.username}${isSelf ? ' <span class="muted small">(you)</span>' : ''}</td>` +
-      `<td><span class="role-pill ${u.role}">${u.role === 'admin' ? 'Administrator' : 'Support agent'}</span></td>` +
-      `<td class="muted">${u.createdBy || '—'}</td>` +
-      `<td style="text-align:right;"></td>`;
-    const td = tr.lastElementChild;
+      `<td><b>${u.customerId || '—'}</b></td>` +
+      `<td>${u.displayName || u.username}</td>` +
+      `<td>${statusPill}</td>` +
+      `<td class="muted">${u.agentCount || 0}</td>` +
+      `<td style="white-space:nowrap;">${teamCell}</td>` +
+      `<td style="text-align:right;white-space:nowrap;"></td>`;
+    // wire the Edit-limit button
+    const limitBtn = tr.querySelector('button[data-limit]');
+    if (limitBtn) limitBtn.addEventListener('click', () => {
+      const v = prompt('Team member limit for "' + (u.displayName || u.customerId) + '" (0 = none):', String(lim));
+      if (v === null) return;
+      const n = parseInt(v, 10);
+      if (!Number.isFinite(n) || n < 0) return alert('Enter a number 0 or greater.');
+      socket.emit('admin_set_team_limit', { username: u.username, teamLimit: n });
+    });
+    const cell = tr.lastElementChild;
+
+    const sus = document.createElement('button');
+    sus.className = 'tbl-btn';
+    sus.textContent = u.suspended ? 'Enable' : 'Suspend';
+    sus.title = u.suspended ? 'Re-enable this customer\'s login' : 'Block this customer from logging in';
+    sus.addEventListener('click', () => {
+      const msg = u.suspended
+        ? 'Re-enable customer "' + (u.displayName || u.customerId) + '"? They will be able to log in again.'
+        : 'Suspend customer "' + (u.displayName || u.customerId) + '"? They will be logged out and blocked until re-enabled. Their machines are kept.';
+      if (confirm(msg)) socket.emit('admin_suspend_user', { username: u.username, suspended: !u.suspended });
+    });
+    cell.appendChild(sus);
+
+    const rst = document.createElement('button');
+    rst.className = 'tbl-btn';
+    rst.textContent = 'Reset password';
+    rst.addEventListener('click', () => {
+      if (confirm('Reset the dashboard password for "' + (u.displayName || u.customerId) + '"? A new password is generated and the customer is logged out.'))
+        socket.emit('admin_reset_password', { username: u.username });
+    });
+    cell.appendChild(rst);
+
     const del = document.createElement('button');
     del.className = 'tbl-del';
     del.textContent = 'Delete';
-    del.disabled = isSelf;
+    del.title = 'Delete this customer. Their machines move to you.';
     del.addEventListener('click', () => {
-      if (confirm('Delete user "' + u.username + '"?')) socket.emit('admin_delete_user', { username: u.username });
+      if (confirm('Delete customer "' + (u.displayName || u.customerId) + '" permanently? Their machines are reassigned to you.'))
+        socket.emit('admin_delete_user', { username: u.username });
     });
-    td.appendChild(del);
+    cell.appendChild(del);
     tb.appendChild(tr);
   });
   renderAdminAgents();
@@ -517,17 +702,18 @@ function openTransferModal(c) {
 
   const sel = document.getElementById('tr-user');
   sel.innerHTML = '';
-  const others = supportUsers.filter(u => u.username !== (c.owner || ''));
+  // Only other customers are valid reassignment targets (not the owner).
+  const others = supportUsers.filter(u => u.username !== (c.owner || '') && u.role !== 'admin');
   others.forEach(u => {
     const o = document.createElement('option');
     o.value = u.username;
-    o.textContent = u.username + (u.role === 'admin' ? ' (admin)' : '');
+    o.textContent = (u.displayName || u.username) + (u.customerId ? ' (' + u.customerId + ')' : '');
     sel.appendChild(o);
   });
   const confirmBtn = document.getElementById('tr-confirm');
   confirmBtn.disabled = others.length === 0;
   if (!others.length) {
-    err.textContent = 'There is no other user to transfer to. Create one in the Admin Panel first.';
+    err.textContent = 'No other customer to reassign to. Add one in the Owner Console first.';
     err.style.display = 'block';
   }
   document.getElementById('tr-busy').style.display = c.isBusy ? 'block' : 'none';
@@ -730,14 +916,17 @@ function renderAgents() {
       menu.appendChild(mAvail);
     }
 
-    const mTransfer = document.createElement('button');
-    mTransfer.textContent = 'Transfer to\u2026';
-    mTransfer.addEventListener('click', (e) => {
-      e.stopPropagation();
-      openMenuFor = null;
-      openTransferModal(c);
-    });
-    menu.appendChild(mTransfer);
+    // Reassigning a machine to another customer is a product-owner action.
+    if (agentRole === 'admin' && s !== 'toinstall') {
+      const mTransfer = document.createElement('button');
+      mTransfer.textContent = 'Reassign to customer\u2026';
+      mTransfer.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openMenuFor = null;
+        openTransferModal(c);
+      });
+      menu.appendChild(mTransfer);
+    }
 
     const mRemove = document.createElement('button');
     mRemove.textContent = 'Remove';

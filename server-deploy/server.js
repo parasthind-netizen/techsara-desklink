@@ -17,6 +17,7 @@ app.use(express.json());
 const DATA_DIR   = path.join(__dirname, 'data');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 const AGENTS_FILE= path.join(DATA_DIR, 'agents.json');
+const CONFIG_FILE= path.join(DATA_DIR, 'config.json');
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
 function loadJSON(file, fallback) {
@@ -36,6 +37,15 @@ let users = loadJSON(USERS_FILE, {});
 // has { pending: true, installCode: '123456789' } until a client redeems the
 // code and registers under that name.
 let agents = loadJSON(AGENTS_FILE, {});
+
+// App-wide config (persisted). brandName is the product name agents display;
+// the product owner can change it from the dashboard and push it to all agents.
+let appConfig = loadJSON(CONFIG_FILE, {});
+function persistConfig() { saveJSON(CONFIG_FILE, appConfig); }
+function brandName() {
+  const n = String(appConfig.brandName || '').trim();
+  return n || 'DeskLink';
+}
 
 // agents is parsed JSON — own-property lookups only (a clientId like
 // "constructor" or "__proto__" must never hit the prototype chain).
@@ -93,21 +103,136 @@ function createUser(username, password, role, createdBy) {
   if (getUser(username)) return { error: 'User already exists' };
   if (role !== 'admin' && role !== 'support') role = 'support';
   const { salt, hash } = hashPassword(password);
-  users[username] = { passwordHash: hash, salt, role, createdAt: Date.now(), createdBy };
+  users[username] = { passwordHash: hash, salt, role, suspended: false, createdAt: Date.now(), createdBy };
   persistUsers();
   return { ok: true };
 }
 
-function publicUserList() {
-  return Object.entries(users).map(([username, u]) => ({
-    username, role: u.role, createdAt: u.createdAt, createdBy: u.createdBy || ''
-  }));
+// ── Customers (tenants) ──
+// A "customer" is a support-role account with a stable Customer ID (TS-####)
+// and a display name. Its agents are already isolated from other customers by
+// the per-owner filtering (a customer only ever sees agents it owns). The
+// product owner (admin) creates customers, suspends/enables them, and resets
+// their passwords from the Owner Console.
+function nextCustomerId() {
+  let max = 0;
+  for (const u of Object.values(users)) {
+    const m = /^TS-(\d+)$/.exec(String(u && u.customerId || ''));
+    if (m) max = Math.max(max, parseInt(m[1], 10));
+  }
+  return 'TS-' + String(max + 1).padStart(4, '0');
 }
 
-// Transfer targets for any support user: names and roles only, never the
-// timestamps/creator trail that publicUserList() hands to admins.
+// Readable random password (no ambiguous chars like O/0/l/1/I).
+function genPassword(len = 10) {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+  let out = '';
+  for (let i = 0; i < len; i++) out += alphabet[crypto.randomInt(0, alphabet.length)];
+  return out;
+}
+
+// Normalize a team-member limit: an integer 0..1000; default 5.
+function normTeamLimit(v) {
+  let n = parseInt(v, 10);
+  if (!Number.isFinite(n) || n < 0) n = 5;
+  if (n > 1000) n = 1000;
+  return n;
+}
+
+function createCustomer(displayName, createdBy, teamLimit) {
+  displayName = String(displayName || '').trim();
+  if (displayName.length < 2 || displayName.length > 60)
+    return { error: 'Customer name must be 2-60 characters' };
+  const customerId = nextCustomerId();
+  const username = customerId.toLowerCase();     // login id = the Customer ID, e.g. ts-0001
+  const password = genPassword();
+  const { salt, hash } = hashPassword(password);
+  users[username] = {
+    passwordHash: hash, salt, role: 'support', suspended: false,
+    customerId, displayName,
+    // A customer is the OWNER of its own tenant; its team members share this
+    // tenantId and see the same machines.
+    tenantId: customerId, isTenantOwner: true,
+    teamLimit: normTeamLimit(teamLimit),         // how many team logins they may create
+    createdAt: Date.now(), createdBy
+  };
+  persistUsers();
+  return { ok: true, customerId, username, password, displayName };
+}
+
+// ── Team members (a customer's own support people, same tenant) ──
+function userTenantId(username) {
+  const u = getUser(String(username || '').toLowerCase());
+  return u ? String(u.tenantId || u.customerId || '') : '';
+}
+
+// Members of a tenant (the owner + any team members), oldest first.
+function tenantMembers(tenantId) {
+  return Object.entries(users)
+    .filter(([, u]) => String(u.tenantId || u.customerId || '') === tenantId && u.role !== 'admin')
+    .sort((a, b) => (a[1].createdAt || 0) - (b[1].createdAt || 0));
+}
+
+function nextTeamUsername(tenantId) {
+  const base = tenantId.toLowerCase();           // e.g. ts-0001
+  let n = 2;                                      // the owner is implicitly "1"
+  while (getUser(`${base}-u${n}`)) n++;
+  return `${base}-u${n}`;
+}
+
+function createTeamMember(tenantId, displayName, createdBy) {
+  displayName = String(displayName || '').trim();
+  if (displayName.length < 2 || displayName.length > 60)
+    return { error: 'Team member name must be 2-60 characters' };
+  const username = nextTeamUsername(tenantId);
+  const password = genPassword();
+  const { salt, hash } = hashPassword(password);
+  users[username] = {
+    passwordHash: hash, salt, role: 'support', suspended: false,
+    tenantId, isTenantOwner: false, displayName, createdAt: Date.now(), createdBy
+  };
+  persistUsers();
+  return { ok: true, username, password, displayName, tenantId };
+}
+
+function countAgentsOwnedBy(username) {
+  let n = 0;
+  for (const a of Object.values(agents)) if (a && String(a.owner || '') === username) n++;
+  return n;
+}
+
+function countAgentsInTenant(tenantId) {
+  if (!tenantId) return 0;
+  let n = 0;
+  for (const a of Object.values(agents))
+    if (a && String(a.tenantId || '') === tenantId) n++;
+  return n;
+}
+
+function publicUserList() {
+  return Object.entries(users).map(([username, u]) => {
+    const tenantId = String(u.tenantId || u.customerId || '');
+    return {
+      username, role: u.role, createdAt: u.createdAt, createdBy: u.createdBy || '',
+      customerId: u.customerId || '', displayName: u.displayName || '',
+      tenantId, isTenantOwner: !!u.isTenantOwner,
+      suspended: !!u.suspended,
+      agentCount: countAgentsInTenant(tenantId),
+      // team members (exclude the owner account itself) and the owner's limit
+      teamCount: tenantMembers(tenantId).filter(([, m]) => !m.isTenantOwner).length,
+      teamLimit: (u.teamLimit === undefined ? 5 : u.teamLimit)
+    };
+  });
+}
+
+// Reassign targets (owner-only): only customers (tenant owners), never team
+// members or the product owner.
 function transferUserList() {
-  return Object.entries(users).map(([username, u]) => ({ username, role: u.role }));
+  return Object.entries(users)
+    .filter(([, u]) => u.role === 'support' && u.isTenantOwner)
+    .map(([username, u]) => ({
+      username, role: u.role, customerId: u.customerId || '', displayName: u.displayName || ''
+    }));
 }
 
 // -------------------------------------------------------------
@@ -127,11 +252,21 @@ function agentOwner(name) {
   return entry ? String(entry.owner || '') : '';
 }
 
+// The tenant an agent belongs to (its own stamp, or derived from its owner).
+function agentTenantId(name) {
+  const entry = getAgent(name);
+  if (!entry) return '';
+  return String(entry.tenantId || userTenantId(entry.owner) || entry.owner || '');
+}
+
+// A support user sees an agent if they're the product owner (admin) OR the
+// agent is in their tenant — so every team member of a customer sees all of
+// that customer's machines, and nobody sees another customer's.
 function canSeeAgent(sup, name) {
   if (!sup) return false;
   if (sup.role === 'admin') return true;
-  const owner = agentOwner(name);
-  return !!owner && owner === sup.name;
+  const t = sup.tenantId || '';
+  return !!t && agentTenantId(name) === t;
 }
 
 // Agents created before ownership existed have no owner, and an unowned agent
@@ -151,6 +286,38 @@ function canSeeAgent(sup, name) {
     persistAgents();
     console.log(`Ownership migration: assigned an owner to ${changed} agent(s) (fallback "${fallback}")`);
   }
+})();
+
+// Give every existing customer (support-role account) a Customer ID + display
+// name if it predates this feature, so the Owner Console shows them properly.
+(function migrateCustomerIds() {
+  let changed = 0;
+  // Oldest first, so IDs are assigned in a stable, sensible order.
+  const supportUsers = Object.entries(users)
+    .filter(([, u]) => u.role === 'support')
+    .sort((a, b) => (a[1].createdAt || 0) - (b[1].createdAt || 0));
+  for (const [username, u] of supportUsers) {
+    if (!u.customerId) { u.customerId = nextCustomerId(); changed++; }
+    if (!u.displayName) u.displayName = username;
+    if (u.suspended === undefined) u.suspended = false;
+    // Pre-team accounts each become the owner of their own tenant.
+    if (!u.tenantId) { u.tenantId = u.customerId; changed++; }
+    if (u.isTenantOwner === undefined) u.isTenantOwner = true;
+    if (u.teamLimit === undefined) { u.teamLimit = 5; changed++; }
+  }
+  if (changed) { persistUsers(); console.log(`Customer migration: updated ${changed} account field(s)`); }
+})();
+
+// Stamp every agent with the tenant it belongs to (= its owner's tenant), so
+// isolation and team sharing work by tenant, not by a single username.
+(function migrateAgentTenants() {
+  let changed = 0;
+  for (const a of Object.values(agents)) {
+    if (!a || a.tenantId) continue;
+    a.tenantId = userTenantId(a.owner) || String(a.owner || '');
+    changed++;
+  }
+  if (changed) { persistAgents(); console.log(`Agent tenant migration: stamped ${changed} agent(s)`); }
 })();
 
 // ─────────────────────────────────────────────────────────────
@@ -396,7 +563,17 @@ ensureDownloadZip();
 // ─────────────────────────────────────────────────────────────
 // HTTP endpoints
 // ─────────────────────────────────────────────────────────────
-app.use(express.static(path.join(__dirname, 'dashboard')));
+// ── Routing ──
+// Public marketing landing page at / (front door with Download + Log in).
+// The support/owner dashboard app lives at /dashboard. Static assets
+// (script.js, style.css, download.html, landing.html) are served from the
+// dashboard folder at the root path by the static middleware below.
+const DASHBOARD_DIR = path.join(__dirname, 'dashboard');
+app.get('/', (req, res) => res.sendFile(path.join(DASHBOARD_DIR, 'landing.html')));
+app.get(['/dashboard', '/dashboard/', '/app'], (req, res) => res.sendFile(path.join(DASHBOARD_DIR, 'index.html')));
+// Serve static assets but NOT index.html at '/' (index:false) — '/' is the
+// landing page, set above.
+app.use(express.static(DASHBOARD_DIR, { index: false }));
 
 // Auto-update feed. The yml manifests (latest.yml, latest-mac.yml) must never
 // be cached — agents must always see the true target version.
@@ -414,6 +591,13 @@ app.get('/healthz', (req, res) => {
 app.get('/ice', (req, res) => {
   res.set('Access-Control-Allow-Origin', '*');   // Electron client fetches this cross-origin
   res.json({ iceServers: iceServers() });
+});
+
+// Current product/brand name — a fresh install can read it before its socket
+// connects, so the very first screen already shows the owner's brand.
+app.get('/branding', (req, res) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  res.json({ name: brandName() });
 });
 
 // ── Installation-code redemption (client first-run setup) ──
@@ -547,6 +731,7 @@ function broadcastClients() {
     clientList.push({
       id,
       owner: (entry && entry.owner) || '',
+      tenantId: agentTenantId(id),
       available: c.available,
       online: !!c.socketId,
       isBusy: activeSessions.has(id),
@@ -567,6 +752,7 @@ function broadcastClients() {
     clientList.push({
       id,
       owner: entry.owner || '',
+      tenantId: agentTenantId(id),
       available: !!entry.available,
       online: false,
       isBusy: false,
@@ -578,11 +764,11 @@ function broadcastClients() {
       installCode: entry.pending ? formatInstallCode(entry.installCode) : undefined
     });
   }
-  // Agents are private to their owner -- a support user is sent only their own
-  // machines; admins get the whole fleet.
+  // Agents are private to their TENANT -- every team member of a customer is
+  // sent that customer's machines; admins (product owner) get the whole fleet.
   for (const [socketId, sup] of supports) {
     io.to(socketId).emit('clients_list',
-      sup.role === 'admin' ? clientList : clientList.filter(c => c.owner === sup.name));
+      sup.role === 'admin' ? clientList : clientList.filter(c => c.tenantId && c.tenantId === sup.tenantId));
   }
 }
 
@@ -679,6 +865,8 @@ io.on('connection', (socket) => {
       // value so it converges — this is what makes a dashboard enable/disable
       // stick even after the client restarts.
       socket.emit('availability_state', { available });
+      // Tell the agent the current product name so it displays the owner's brand.
+      socket.emit('branding', { name: brandName() });
 
       // Canary health: an agent we pushed that comes back on ITS platform's
       // feed version unlocks push-to-all FOR THAT PLATFORM only.
@@ -728,17 +916,30 @@ io.on('connection', (socket) => {
         console.warn(`Login FAILED for "${username}" — ${user ? 'wrong password' : 'no such user'} (from ${from})`);
         return socket.emit('login_error', 'Invalid username or password');
       }
+      // Suspended customers cannot log in until the product owner re-enables them.
+      if (user.suspended) {
+        console.warn(`Login BLOCKED for suspended account "${username}"`);
+        return socket.emit('login_error', 'This account is suspended. Please contact support@techsarasolutions.com.');
+      }
       const agentName = username;
       const role = user.role;
+      const tenantId = String(user.tenantId || user.customerId || '');
+      const isTenantOwner = !!user.isTenantOwner;
+      const loginInfo = {
+        username: agentName, role,
+        customerId: user.customerId || '', displayName: user.displayName || '',
+        tenantId, isTenantOwner
+      };
+      const sessionBase = { name: agentName, role, tenantId, isTenantOwner };
 
       // Grace-period reconnect: restore a preserved session
       if (reconnectTimers.has(agentName)) {
         const pending = reconnectTimers.get(agentName);
         reconnectTimers.delete(agentName);
         const clientId = pending.clientId;
-        supports.set(socket.id, { name: agentName, role, targetClientId: clientId });
+        supports.set(socket.id, { ...sessionBase, targetClientId: clientId });
         activeSessions.set(clientId, socket.id);
-        socket.emit('login_success', { username: agentName, role });
+        socket.emit('login_success', loginInfo);
         socket.emit('session_restored', { clientId });
         const clientData = clients.get(clientId);
         if (clientData) io.to(clientData.socketId).emit('support_request', { supportId: socket.id, agentName });
@@ -755,9 +956,9 @@ io.on('connection', (socket) => {
         }
       }
 
-      supports.set(socket.id, { name: agentName, role, targetClientId: null });
-      console.log(`Support registered: ${agentName} (${role})`);
-      socket.emit('login_success', { username: agentName, role });
+      supports.set(socket.id, { ...sessionBase, targetClientId: null });
+      console.log(`Support registered: ${agentName} (${role}${isTenantOwner ? ', tenant owner' : ''}, tenant ${tenantId})`);
+      socket.emit('login_success', loginInfo);
       broadcastClients();
       return;
     }
@@ -806,6 +1007,81 @@ io.on('connection', (socket) => {
     console.log(`AUDIT set_agent_availability "${clientId}" -> ${available} by ${sup.name}`);
     socket.emit('agent_availability_ok', { clientId, available });
     broadcastClients();
+  });
+
+  // ── Team (a customer's own support people within their organization) ──
+  function sendTeam(socket, sup) {
+    const members = tenantMembers(sup.tenantId).map(([username, u]) => ({
+      username, displayName: u.displayName || username,
+      isTenantOwner: !!u.isTenantOwner, suspended: !!u.suspended,
+      online: Array.from(supports.values()).some(s => s.name === username)
+    }));
+    socket.emit('team_list', members);
+  }
+
+  socket.on('team_list', () => {
+    const sup = supports.get(socket.id);
+    if (!sup || sup.role === 'admin' || !sup.tenantId) return;
+    sendTeam(socket, sup);
+  });
+
+  // Create a login for another support person in the same organization. Only
+  // the customer's own owner account (the one the product owner issued) may do
+  // this — a team member cannot mint more team members.
+  socket.on('team_create', (data) => {
+    const sup = supports.get(socket.id);
+    if (!sup || sup.role === 'admin' || !sup.tenantId) return;
+    if (!sup.isTenantOwner) return socket.emit('team_error', 'Only your main account can add team members');
+    // Enforce the per-customer team-member limit set by the product owner.
+    const me = getUser(sup.name);
+    const limit = normTeamLimit(me && me.teamLimit !== undefined ? me.teamLimit : 5);
+    const current = tenantMembers(sup.tenantId).filter(([, u]) => !u.isTenantOwner).length;
+    if (current >= limit)
+      return socket.emit('team_error', limit === 0
+        ? 'Your plan does not include team members. Contact support@techsarasolutions.com to enable them.'
+        : `You have reached your team member limit (${limit}). Contact support@techsarasolutions.com to increase it.`);
+    const result = createTeamMember(sup.tenantId, data && data.displayName, sup.name);
+    if (result.error) return socket.emit('team_error', result.error);
+    console.log(`AUDIT team_create ${result.username} ("${result.displayName}") in ${sup.tenantId} by ${sup.name}`);
+    socket.emit('team_member_created', { username: result.username, password: result.password, displayName: result.displayName });
+    sendTeam(socket, sup);
+  });
+
+  socket.on('team_reset_password', (data) => {
+    const sup = supports.get(socket.id);
+    if (!sup || sup.role === 'admin' || !sup.isTenantOwner) return socket.emit('team_error', 'Not allowed');
+    const uname = String((data && data.username) || '').toLowerCase();
+    const u = getUser(uname);
+    if (!u || String(u.tenantId || '') !== sup.tenantId || u.isTenantOwner)
+      return socket.emit('team_error', 'That team member is not in your organization');
+    const newPassword = genPassword();
+    const { salt, hash } = hashPassword(newPassword);
+    u.salt = salt; u.passwordHash = hash; persistUsers();
+    for (const [sid, s] of supports.entries()) if (s.name === uname) {
+      io.to(sid).emit('force_logout', 'Your password was reset. Please log in again with the new password.');
+      supports.delete(sid);
+    }
+    console.log(`AUDIT team_reset_password ${uname} by ${sup.name}`);
+    socket.emit('team_password_reset', { username: uname, displayName: u.displayName || uname, password: newPassword });
+    sendTeam(socket, sup);
+  });
+
+  socket.on('team_remove', (data) => {
+    const sup = supports.get(socket.id);
+    if (!sup || sup.role === 'admin' || !sup.isTenantOwner) return socket.emit('team_error', 'Not allowed');
+    const uname = String((data && data.username) || '').toLowerCase();
+    const u = getUser(uname);
+    if (!u || String(u.tenantId || '') !== sup.tenantId || u.isTenantOwner || uname === sup.name)
+      return socket.emit('team_error', 'That team member is not in your organization');
+    delete users[uname]; persistUsers();
+    for (const [sid, s] of supports.entries()) if (s.name === uname) {
+      if (s.targetClientId && activeSessions.has(s.targetClientId)) endSession(s.targetClientId, 'team_member_removed');
+      io.to(sid).emit('force_logout', 'Your access was removed by your organization.');
+      supports.delete(sid);
+    }
+    console.log(`AUDIT team_remove ${uname} by ${sup.name}`);
+    socket.emit('team_ok', 'Team member removed');
+    sendTeam(socket, sup);
   });
 
   socket.on('request_connection', (clientId) => {
@@ -858,43 +1134,40 @@ io.on('connection', (socket) => {
     let code;
     do { code = String(crypto.randomInt(100000000, 1000000000)); }
     while (Object.values(agents).some(a => a && a.pending && a.installCode === code));
-    agents[name] = { pending: true, installCode: code, available: false, version: 'unknown', createdAt: Date.now(), createdBy: sup.name, owner: sup.name, lastSeen: null };
+    agents[name] = { pending: true, installCode: code, available: false, version: 'unknown', createdAt: Date.now(), createdBy: sup.name, owner: sup.name, tenantId: sup.tenantId || userTenantId(sup.name), lastSeen: null };
     persistAgents();
     console.log(`Agent slot "${name}" created by ${sup.name} (code ${formatInstallCode(code)})`);
     socket.emit('agent_slot_created', { name, code: formatInstallCode(code) });
     broadcastClients();
   });
 
-  // -- Hand an agent over to another support user --
-  // The current owner (or an admin) moves the machine into someone else's
-  // dashboard and out of their own. Any live session on it ends first -- the
-  // outgoing owner must not keep a screen open on a machine that is no longer
-  // theirs. The alternative route is client-side: re-provision the machine
-  // with an installation code issued by the new owner.
+  // -- Reassign a machine to a different customer (PRODUCT OWNER only) --
+  // For strict tenant isolation a customer can NOT push a machine into another
+  // customer's dashboard; only the product owner moves machines between
+  // customers. Any live session on it ends first.
   socket.on('transfer_agent', (data) => {
+    if (!requireAdmin(socket)) return socket.emit('agent_transfer_error', 'Only the product owner can reassign a machine');
     const sup = supports.get(socket.id);
-    if (!sup) return;
     const clientId = String((data && data.clientId) || '').trim();
     const to = String((data && data.to) || '').trim().toLowerCase();
     const entry = getAgent(clientId);
     if (!entry) return socket.emit('agent_transfer_error', 'Agent not found');
-    if (!canSeeAgent(sup, clientId))
-      return socket.emit('agent_transfer_error', 'That agent is not yours to transfer');
-    if (!getUser(to)) return socket.emit('agent_transfer_error', 'No such support user');
+    if (!getUser(to)) return socket.emit('agent_transfer_error', 'No such customer');
     if (String(entry.owner || '') === to)
       return socket.emit('agent_transfer_error', `${clientId} already belongs to ${to}`);
     if (activeSessions.has(clientId)) endSession(clientId, 'agent_transferred');
     entry.owner = to;
+    entry.tenantId = userTenantId(to) || to;   // move it into the new customer's tenant
     persistAgents();
     console.log(`AUDIT transfer_agent "${clientId}": ${sup.name} -> ${to}`);
     socket.emit('agent_transfer_ok', { clientId, to });
     broadcastClients();
   });
 
-  // Any support user may list usernames -- they need them to pick a transfer
-  // target. Deliberately narrower than admin_list_users.
+  // List customers for the transfer picker — PRODUCT OWNER only, so a customer
+  // can never enumerate other customers (tenant isolation).
   socket.on('list_support_users', () => {
-    if (!supports.has(socket.id)) return;
+    if (!requireAdmin(socket)) return;
     socket.emit('support_users', transferUserList());
   });
 
@@ -914,29 +1187,146 @@ io.on('connection', (socket) => {
     socket.emit('admin_users', publicUserList());
   });
 
+  // ── Owner console: customer lifecycle ──────────────────────────
+  // Create a customer (tenant): generates a Customer ID + login password to
+  // hand over. The owner reads these out to the customer; email delivery is
+  // out of band (the customer reached us at support@techsarasolutions.com).
+  socket.on('admin_create_customer', (data) => {
+    if (!requireAdmin(socket)) return;
+    const me = supports.get(socket.id).name;
+    const result = createCustomer(data && data.displayName, me, data && data.teamLimit);
+    if (result.error) return socket.emit('admin_error', result.error);
+    console.log(`AUDIT create_customer ${result.customerId} ("${result.displayName}") by ${me}`);
+    // The one-time password is sent ONLY to the creating owner's socket.
+    socket.emit('customer_created', {
+      customerId: result.customerId, username: result.username,
+      password: result.password, displayName: result.displayName
+    });
+    socket.emit('admin_ok', `Customer ${result.customerId} created`);
+    socket.emit('admin_users', publicUserList());
+  });
+
+  // ── App branding (product owner only) ──
+  // Set the product name shown inside every agent, and push it live to all
+  // connected agents. New/reconnecting agents also receive it on register.
+  socket.on('admin_set_brand', (data) => {
+    if (!requireAdmin(socket)) return;
+    const name = String((data && data.name) || '').trim().slice(0, 40);
+    if (name.length < 2) return socket.emit('admin_error', 'App name must be 2-40 characters');
+    appConfig.brandName = name;
+    persistConfig();
+    // Live-update every connected agent.
+    let n = 0;
+    for (const c of clients.values()) if (c.socketId) { io.to(c.socketId).emit('branding', { name }); n++; }
+    console.log(`AUDIT set_brand "${name}" by ${supports.get(socket.id).name} -> ${n} live agent(s)`);
+    socket.emit('admin_ok', `App name set to "${name}" and pushed to ${n} online agent(s)`);
+    for (const [sid, s] of supports) if (s.role === 'admin') io.to(sid).emit('admin_brand', { name });
+  });
+
+  socket.on('admin_get_brand', () => {
+    if (!requireAdmin(socket)) return;
+    socket.emit('admin_brand', { name: brandName() });
+  });
+
+  // Change a customer's team-member limit at any time (product owner only).
+  socket.on('admin_set_team_limit', (data) => {
+    if (!requireAdmin(socket)) return;
+    const uname = String((data && data.username) || '').toLowerCase();
+    const u = getUser(uname);
+    if (!u || !u.isTenantOwner) return socket.emit('admin_error', 'Customer not found');
+    u.teamLimit = normTeamLimit(data && data.teamLimit);
+    persistUsers();
+    console.log(`AUDIT set_team_limit "${uname}" -> ${u.teamLimit} by ${supports.get(socket.id).name}`);
+    socket.emit('admin_ok', `Team limit for "${u.customerId || uname}" set to ${u.teamLimit}`);
+    socket.emit('admin_users', publicUserList());
+  });
+
+  // Suspend / re-enable a customer. A suspended customer cannot log in and any
+  // live dashboard session is kicked. Their agents and data are untouched.
+  socket.on('admin_suspend_user', (data) => {
+    if (!requireAdmin(socket)) return;
+    const uname = String((data && data.username) || '').toLowerCase();
+    const suspend = !!(data && data.suspended);
+    const me = supports.get(socket.id).name;
+    const u = getUser(uname);
+    if (!u) return socket.emit('admin_error', 'Customer not found');
+    if (uname === me) return socket.emit('admin_error', 'You cannot suspend your own account');
+    if (u.role === 'admin') return socket.emit('admin_error', 'Cannot suspend an owner/admin account');
+    // Suspending a customer suspends the WHOLE organization (owner + every team
+    // member), so a blocked customer can't just log in as a teammate.
+    const tenantId = String(u.tenantId || u.customerId || '');
+    const affected = tenantId ? tenantMembers(tenantId).map(([n]) => n) : [uname];
+    for (const n of affected) { if (users[n]) users[n].suspended = suspend; }
+    persistUsers();
+    if (suspend) {
+      for (const [sid, s] of supports.entries()) {
+        if (affected.includes(s.name)) {
+          if (s.targetClientId && activeSessions.has(s.targetClientId)) endSession(s.targetClientId, 'owner_suspended');
+          io.to(sid).emit('force_logout', 'Your account has been suspended. Contact support@techsarasolutions.com.');
+          supports.delete(sid);
+        }
+      }
+    }
+    console.log(`AUDIT ${suspend ? 'suspend' : 'enable'}_customer "${uname}" (tenant ${tenantId}, ${affected.length} account(s)) by ${me}`);
+    socket.emit('admin_ok', `Customer "${u.customerId || uname}" ${suspend ? 'suspended' : 're-enabled'}`);
+    socket.emit('admin_users', publicUserList());
+    broadcastClients();
+  });
+
+  // Reset a customer's dashboard password to a fresh generated one, returned to
+  // the owner to hand over. (Owner can't read the old one — it's hashed.)
+  socket.on('admin_reset_password', (data) => {
+    if (!requireAdmin(socket)) return;
+    const uname = String((data && data.username) || '').toLowerCase();
+    const me = supports.get(socket.id).name;
+    const u = getUser(uname);
+    if (!u) return socket.emit('admin_error', 'Customer not found');
+    const newPassword = genPassword();
+    const { salt, hash } = hashPassword(newPassword);
+    u.salt = salt; u.passwordHash = hash;
+    persistUsers();
+    // Force the customer to re-login with the new password.
+    for (const [sid, s] of supports.entries()) {
+      if (s.name === uname) {
+        if (s.targetClientId && activeSessions.has(s.targetClientId)) endSession(s.targetClientId, 'password_reset');
+        io.to(sid).emit('force_logout', 'Your password was reset. Please log in again with the new password.');
+        supports.delete(sid);
+      }
+    }
+    console.log(`AUDIT reset_password "${uname}" by ${me}`);
+    socket.emit('password_reset_ok', { username: uname, customerId: u.customerId || '', displayName: u.displayName || '', password: newPassword });
+    socket.emit('admin_ok', `Password for "${u.customerId || uname}" reset`);
+  });
+
   socket.on('admin_delete_user', (data) => {
     if (!requireAdmin(socket)) return;
     const uname = String(data.username || '').toLowerCase();
     const me = supports.get(socket.id).name;
     if (!getUser(uname)) return socket.emit('admin_error', 'User not found');
     if (uname === me) return socket.emit('admin_error', 'You cannot delete your own account');
-    if (users[uname].role === 'admin' && Object.values(users).filter(u => u.role === 'admin').length <= 1)
+    const target = users[uname];
+    if (target.role === 'admin' && Object.values(users).filter(u => u.role === 'admin').length <= 1)
       return socket.emit('admin_error', 'Cannot delete the last admin');
-    delete users[uname];
+    // Deleting a customer deletes the WHOLE organization (owner + team members)
+    // and moves that organization's machines to the product owner.
+    const tenantId = String(target.tenantId || target.customerId || '');
+    const toDelete = (tenantId && target.role !== 'admin')
+      ? tenantMembers(tenantId).map(([n]) => n)
+      : [uname];
+    for (const n of toDelete) delete users[n];
     persistUsers();
-    // Their agents would be owned by a user that no longer exists -- invisible
-    // to every non-admin. Move them to the admin doing the deletion.
     let moved = 0;
     for (const entry of Object.values(agents)) {
-      if (entry && String(entry.owner || '') === uname) { entry.owner = me; moved++; }
+      if (!entry) continue;
+      const inTenant = tenantId ? String(entry.tenantId || userTenantId(entry.owner)) === tenantId : (String(entry.owner || '') === uname);
+      if (inTenant) { entry.owner = me; entry.tenantId = userTenantId(me) || me; moved++; }
     }
-    if (moved) { persistAgents(); console.log(`Reassigned ${moved} agent(s) from ${uname} to ${me}`); }
-    // Kick any live session of that user
+    if (moved) { persistAgents(); console.log(`Reassigned ${moved} agent(s) from tenant ${tenantId || uname} to ${me}`); }
     for (const [sid, sup] of supports.entries()) {
-      if (sup.name === uname) { io.to(sid).emit('force_logout', 'Your account was removed'); supports.delete(sid); }
+      if (toDelete.includes(sup.name)) { io.to(sid).emit('force_logout', 'Your account was removed'); supports.delete(sid); }
     }
-    console.log(`Admin ${me} deleted user ${uname}`);
-    socket.emit('admin_ok', `User "${uname}" deleted` + (moved ? ` -- ${moved} agent(s) moved to you` : ''));
+    console.log(`Admin ${me} deleted customer ${uname} (${toDelete.length} account(s))`);
+    socket.emit('admin_ok', `Customer "${uname}" deleted` + (moved ? ` -- ${moved} machine(s) moved to you` : ''));
     socket.emit('admin_users', publicUserList());
     broadcastClients();
   });
