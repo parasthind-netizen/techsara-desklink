@@ -192,7 +192,7 @@ app.whenReady().then(async () => {
   check('connect: the video is playing (frames keep advancing)', await playing(cwin));
   check('connect: the "connecting" overlay is gone', await until(cwin, `getComputedStyle(document.getElementById('placeholder')).display === 'none'`));
   check('connect: the control channel opens', await until(mwin, `__m.connected`) && await until(cwin, `document.getElementById('remote-video').classList.contains('remote-cursor')`));
-  check('connect: the chosen quality is sent as soon as the channel opens', await until(mwin, `__m.msgs.some(x => x.type === 'quality' && x.level === 'high')`));
+  check('connect: the chosen quality is sent as soon as the channel opens', await until(mwin, `__m.msgs.some(x => x.type === 'quality' && x.level === 'medium')`));
   check('connect: the console shows the machine name and the session entry', (await text(cwin, '#session-client-name')) === MACHINE && await until(cwin, `getComputedStyle(document.getElementById('nav-session')).display !== 'none'`));
   const box = (await picturePoint(cwin, 0, 0)).box;
   check('layout: the picture area fills the space beside the session panel', box.w > 900 && box.h > 700 && box.l >= 244);
@@ -273,9 +273,9 @@ app.whenReady().then(async () => {
   await js(cwin, `(function(){ const s = document.getElementById('ctrl-quality'); s.value = 'low'; s.dispatchEvent(new Event('change', { bubbles: true })); })(); true`);
   check('quality: choosing Low tells the machine', await until(mwin, `__m.msgs.some(x => x.type === 'quality' && x.level === 'low')`, 3000));
   await js(cwin, `(function(){ const s = document.getElementById('ctrl-quality'); s.value = 'high'; s.dispatchEvent(new Event('change', { bubbles: true })); })(); true`);
-  check('clipboard: the console polls the machine clipboard once a second', await until(mwin, `__m.clipRequests >= 2`, 4000));
+  check('clipboard: the console polls the machine clipboard periodically', await until(mwin, `__m.clipRequests >= 2`, 8000));
   await js(mwin, `__m.clip = 'copied on the machine'; true`);
-  check('clipboard: new text copied on the machine reaches the console', await until(cwin, `lastClientClip === 'copied on the machine'`, 4000));
+  check('clipboard: new text copied on the machine reaches the console', await until(cwin, `lastClientClip === 'copied on the machine'`, 6000));
 
   // a dialog over the session must get the keyboard
   await moveTo(cwin, p.x, p.y); await take(mwin);

@@ -379,8 +379,8 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
             <select id="ctrl-quality" aria-label="Screen quality">
               <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high" selected>High</option>
+              <option value="medium" selected>Medium</option>
+              <option value="high">High</option>
             </select>
           </label>
 
@@ -402,7 +402,7 @@
             <p class="placeholder-sub" id="placeholder-sub">Waiting for the agent's screen</p>
           </div>
 
-          <video id="remote-video" autoplay playsinline></video>
+          <video id="remote-video" autoplay muted playsinline></video>
 
           <!-- keyboard routing pill -->
           <div class="kbd-pill" id="kbd-pill">⌨ Keyboard → Remote</div>

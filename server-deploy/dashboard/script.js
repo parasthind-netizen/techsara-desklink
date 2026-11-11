@@ -1696,8 +1696,9 @@ socket.on('offer', async (data) => {
   const connStart = Date.now();
   // Built synchronously with the cached ICE config (refreshed at connect time,
   // not on this path) so candidates that arrive immediately are not dropped.
-  const pc = new RTCPeerConnection(iceConfig);
+  const pc = new RTCPeerConnection(Object.assign({ bundlePolicy: 'max-bundle', rtcpMuxPolicy: 'require' }, iceConfig));
   peerConnection = pc;
+  let loggedPath = false;   // log the negotiated ICE path (host/srflx/relay + RTT) once
 
   pc.ontrack = (event) => {
     log(`Video stream received (${Date.now() - connStart}ms)`);
@@ -1709,6 +1710,7 @@ socket.on('offer', async (data) => {
     } catch (_) {}
     if (video.srcObject !== event.streams[0]) {
       video.srcObject = event.streams[0];
+      video.play().catch(() => {});   // recover if autoplay is ever blocked (frozen last frame reads as infinite lag)
       showVideoUI();
       document.getElementById('placeholder').style.display = 'none';
     }
@@ -1718,7 +1720,25 @@ socket.on('offer', async (data) => {
     if (event.candidate) socket.emit('ice-candidate', { target: data.sender, candidate: event.candidate });
   };
 
-  pc.oniceconnectionstatechange = () => { if (peerConnection === pc) log('ICE state: ' + pc.iceConnectionState); };
+  pc.oniceconnectionstatechange = async () => {
+    if (peerConnection !== pc) return;
+    log('ICE state: ' + pc.iceConnectionState);
+    if (loggedPath) return;
+    if (pc.iceConnectionState !== 'connected' && pc.iceConnectionState !== 'completed') return;
+    loggedPath = true;
+    // Surface the real network path so a laggy session is diagnosable in the
+    // field: 'relay' on either side = media is detouring through the TURN.
+    try {
+      const s = await pc.getStats();
+      let p = null;
+      s.forEach(r => { if (r.type === 'candidate-pair' && r.nominated && r.state === 'succeeded') p = r; });
+      if (!p) { loggedPath = false; return; }
+      const L = s.get(p.localCandidateId), R = s.get(p.remoteCandidateId);
+      const types = ((L && L.candidateType) || '?') + '/' + ((R && R.candidateType) || '?');
+      const relayed = (L && L.candidateType === 'relay') || (R && R.candidateType === 'relay');
+      log('path ' + types + ' rtt=' + Math.round((p.currentRoundTripTime || 0) * 1000) + 'ms' + (relayed ? ' - RELAYED (slow detour; fix: TURN nearer the users)' : ' - direct'));
+    } catch (_) { loggedPath = false; }
+  };
   pc.onconnectionstatechange = () => { if (peerConnection === pc) log('Connection state: ' + pc.connectionState); };
 
   pc.ondatachannel = (event) => {
@@ -1845,6 +1865,14 @@ document.getElementById('ctrl-keyboard').addEventListener('click', () => {
    the message and stream at their default (High). */
 const qualitySelect = document.getElementById('ctrl-quality');
 try {
+  // One-time: the old default was High (60fps/10Mbps full-res), which overloads
+  // a software encoder and reads as lag. Move anyone still parked on a saved
+  // 'high' down to Medium once, so the fix actually reaches existing viewers. A
+  // deliberate re-pick of High afterwards sticks (the migration runs only once).
+  if (localStorage.getItem('ts_quality') === 'high' && !localStorage.getItem('ts_q_mig_v2')) {
+    localStorage.setItem('ts_quality', 'medium');
+  }
+  localStorage.setItem('ts_q_mig_v2', '1');
   const saved = localStorage.getItem('ts_quality');
   if (saved && [...qualitySelect.options].some(o => o.value === saved)) qualitySelect.value = saved;
 } catch (_) {}
@@ -1888,9 +1916,14 @@ let pendingClip    = null;   // arrived while the tab was unfocused
 function startClipSync() {
   stopClipSync();
   lastClientClip = null;
+  // The reply shares the single ordered input channel, so polling mid-drag
+  // head-of-line-blocks moves AND keys. Poll less often, and never while the
+  // pointer is actively moving (clicks/keys use sendNow and are never gated).
   clipPollTimer = setInterval(() => {
-    if (dc()) dataChannel.send(JSON.stringify({ type: 'clipboard_request' }));
-  }, 1000);
+    if (!dc()) return;
+    if (Date.now() - lastMoveAt < 250) return;
+    dataChannel.send(JSON.stringify({ type: 'clipboard_request' }));
+  }, 2500);
 }
 
 function stopClipSync() {
@@ -2042,11 +2075,17 @@ function normPoint(e) {
 
 // Always transmit the LATEST mouse position (~60fps trailing throttle).
 let pendingMove = null, moveTimer = null;
+let lastMoveAt = 0;   // last pointermove time — gates the clipboard poll off active drags
 function flushMove() {
-  if (pendingMove && dc()) {
+  // Shed stale moves (never clicks/keys) when the channel is backed up, so a
+  // stalled uplink can't pile up hundreds of ms of outdated cursor positions.
+  // On a healthy link bufferedAmount is ~0, so this behaves exactly as before.
+  if (pendingMove && dc() && dataChannel.bufferedAmount < 65536) {
     dataChannel.send(JSON.stringify(pendingMove));
     pendingMove = null;
     moveTimer = setTimeout(flushMove, 16);
+  } else if (pendingMove && dc()) {
+    moveTimer = setTimeout(flushMove, 16);   // backed up: keep the newest, retry
   } else {
     moveTimer = null;
   }
@@ -2102,6 +2141,7 @@ function updateCursorMode() {
 
 video.addEventListener('pointermove', (e) => {
   if (!mouseEnabled || !dc()) return;
+  lastMoveAt = Date.now();
   const pt = normPoint(e);
   pendingMove = Object.assign({ type: 'mousemove' }, pt);
   if (!moveTimer) flushMove();
